@@ -41,22 +41,10 @@ struct LocalMenuBarView: View {
     var body: some View {
         GlassPanel {
             VStack(spacing: 0) {
-                // Header
-                HeaderPill {
-                    HStack(spacing: 8) {
-                        Text("System Stats")
-                            .font(.system(.headline, design: .rounded))
-                            .fontWeight(.semibold)
-                        Spacer()
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                
-                // Host Selector
+                // Host Selector (moved up; header removed)
                 HostSelectorView()
                     .environmentObject(hostManager)
-                    .padding(.top, 8)
+                    .padding(.top, 12)
 
 
                 
@@ -737,37 +725,10 @@ struct RemoteMenuBarView: View {
     var body: some View {
         GlassPanel {
             VStack(spacing: 0) {
-                // Header
-                HeaderPill {
-                    HStack(spacing: 8) {
-                        Text(host.name)
-                            .font(.system(.headline, design: .rounded))
-                            .fontWeight(.semibold)
-                        
-                        Circle()
-                            .fill(statusColor(for: host.status))
-                            .frame(width: 8, height: 8)
-                        
-                        if host.isStale {
-                            Text("STALE")
-                                .font(.system(size: 8, weight: .bold, design: .rounded))
-                                .foregroundColor(.orange)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 2)
-                                .background(Color.orange.opacity(0.2))
-                                .cornerRadius(3)
-                        }
-                        
-                        Spacer()
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                
-                // Host Selector
+                // Host Selector (header removed; keep selector)
                 HostSelectorView()
                     .environmentObject(hostManager)
-                    .padding(.top, 8)
+                    .padding(.top, 12)
                 
                 // Offline banner
                 if host.status == .offline {
@@ -854,40 +815,43 @@ struct RemoteMenuBarView: View {
                     Spacer()
                 }
                 
-                // Footer
-                HStack(spacing: 8) {
+                // Footer (match local view styling)
+                HStack(spacing: 12) {
                     SettingsLink {
                         GlassRow {
                             HStack(spacing: 6) {
-                                Image(systemName: "gear")
-                                    .foregroundColor(.secondary)
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 14))
                                 Text("Settings")
-                                    .font(.system(.footnote, design: .rounded))
-                                    .foregroundColor(.primary)
+                                    .font(.system(.body, design: .rounded))
                             }
-                            .padding(.vertical, 4)
-                            .frame(maxWidth: .infinity)
+                            .foregroundColor(.accentColor)
                         }
                     }
-                    
-                    GlassRow(action: {
+                    .buttonStyle(NoHighlightButtonStyle())
+
+                    Spacer()
+
+                    Button(action: {
                         NSApplication.shared.terminate(nil)
                     }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "power")
-                                .foregroundColor(.red)
-                            Text("Quit")
-                                .font(.system(.footnote, design: .rounded))
-                                .foregroundColor(.primary)
+                        GlassRow {
+                            HStack(spacing: 6) {
+                                Image(systemName: "power")
+                                    .font(.system(size: 14))
+                                Text("Quit")
+                                    .font(.system(.body, design: .rounded))
+                            }
+                            .foregroundColor(.red)
                         }
-                        .padding(.vertical, 4)
-                        .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 12)
             }
         }
+        .frame(width: 420, height: 600)
     }
     
     private func statusColor(for status: Host.HostStatus) -> Color {

@@ -222,58 +222,68 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     
     func updateMenuBarDisplay() {
         guard let button = statusItem?.button else { return }
-        
+        // Prefer stats from the most-recently viewed device via StatsCoordinator
+        let source = statsCoordinator.currentSource
+
         var displayText = ""
-        
+
         // Show primary stat
         switch settings.menuBarPrimaryStat {
         case .cpu:
-            displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+            displayText += String(format: "CPU: %.0f%%", source?.cpuUsage ?? systemMonitor.cpuUsage)
         case .memory:
-            displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+            displayText += String(format: "RAM: %.0f%%", source?.memoryUsage ?? systemMonitor.memoryUsage)
         case .network:
-            displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
+            displayText += formatBytes(source?.networkUploadSpeed ?? systemMonitor.networkUploadSpeed) + "↑"
         case .storage:
-            displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+            displayText += String(format: "Disk: %.0f%%", source?.storageUsage ?? systemMonitor.storageUsage)
         case .battery:
-            if systemMonitor.batteryAvailable {
-                let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
-                displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+            if (source?.batteryAvailable ?? systemMonitor.batteryAvailable) {
+                let isCharging = source?.batteryIsCharging ?? systemMonitor.batteryIsCharging
+                let icon = isCharging ? "⚡" : "🔋"
+                let percent = source?.batteryPercentage ?? systemMonitor.batteryPercentage
+                displayText += String(format: "%@%.0f%%", icon, percent)
             } else {
                 displayText += "No Battery"
             }
         case .disk:
-            let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
-            let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+            let read = source?.diskReadSpeed ?? systemMonitor.diskReadSpeed
+            let write = source?.diskWriteSpeed ?? systemMonitor.diskWriteSpeed
+            let readMB = read / (1024 * 1024)
+            let writeMB = write / (1024 * 1024)
             displayText += String(format: "R:%.0fMB W:%.0fMB", readMB, writeMB)
         }
-        
+
         // Show secondary stat if enabled
         if settings.showSecondaryStatInMenuBar {
             displayText += " | "
             switch settings.menuBarSecondaryStat {
             case .cpu:
-                displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+                displayText += String(format: "CPU: %.0f%%", source?.cpuUsage ?? systemMonitor.cpuUsage)
             case .memory:
-                displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+                displayText += String(format: "RAM: %.0f%%", source?.memoryUsage ?? systemMonitor.memoryUsage)
             case .network:
-                displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
+                displayText += formatBytes(source?.networkDownloadSpeed ?? systemMonitor.networkDownloadSpeed) + "↓"
             case .storage:
-                displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+                displayText += String(format: "Disk: %.0f%%", source?.storageUsage ?? systemMonitor.storageUsage)
             case .battery:
-                if systemMonitor.batteryAvailable {
-                    let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
-                    displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+                if (source?.batteryAvailable ?? systemMonitor.batteryAvailable) {
+                    let isCharging = source?.batteryIsCharging ?? systemMonitor.batteryIsCharging
+                    let icon = isCharging ? "⚡" : "🔋"
+                    let percent = source?.batteryPercentage ?? systemMonitor.batteryPercentage
+                    displayText += String(format: "%@%.0f%%", icon, percent)
                 } else {
                     displayText += "No Bat"
                 }
             case .disk:
-                let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
-                let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+                let read = source?.diskReadSpeed ?? systemMonitor.diskReadSpeed
+                let write = source?.diskWriteSpeed ?? systemMonitor.diskWriteSpeed
+                let readMB = read / (1024 * 1024)
+                let writeMB = write / (1024 * 1024)
                 displayText += String(format: "↓%.0f ↑%.0f", readMB, writeMB)
             }
         }
-        
+
         button.title = displayText
     }
     
