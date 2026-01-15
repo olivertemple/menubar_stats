@@ -29,8 +29,10 @@ class ThermalProvider: StatsProvider {
     
     func getTemperatures() -> TemperatureStats {
         // Attempt to connect to SMC (System Management Controller)
-        let cpuTemp = readSMCTemperature(key: "TC0P") // CPU proximity sensor
-        let gpuTemp = readSMCTemperature(key: "TG0P") // GPU proximity sensor
+        // Coalesce missing sensor readings to 0.0 so downstream code
+        // can rely on non-optional Double values for CPU/GPU temps.
+        let cpuTemp = readSMCTemperature(key: "TC0P") ?? 0.0 // CPU proximity sensor
+        let gpuTemp = readSMCTemperature(key: "TG0P") ?? 0.0 // GPU proximity sensor
         var socTemp: Double? = nil
         var fanSpeed: Int? = nil
         
