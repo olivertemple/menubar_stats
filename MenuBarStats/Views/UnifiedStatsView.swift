@@ -110,7 +110,7 @@ struct UnifiedStatsView: View {
                                     .padding(.bottom, 6)
                             }
 
-                            StatsSectionsView(source: source, isLocal: isLocal)
+                            StatsSectionsView(source: source, isLocal: isLocal, isTrueNAS: (!isLocal && selectedHost.connectionMode == .truenasAPI))
                                 .environmentObject(settings)
                         } else {
                             Text("No stats available")
@@ -183,6 +183,7 @@ struct UnifiedStatsView: View {
 struct StatsSectionsView: View {
     let source: any StatsSource
     let isLocal: Bool
+    let isTrueNAS: Bool
     @EnvironmentObject var settings: UserSettings
     
     var body: some View {
@@ -212,8 +213,8 @@ struct StatsSectionsView: View {
             }
             
             // Storage Section
-            if settings.showStorageInDetail {
-                StorageSectionView(source: source, isLocal: isLocal)
+                if settings.showStorageInDetail {
+                StorageSectionView(source: source, isLocal: isLocal, isTrueNAS: isTrueNAS)
                     .environmentObject(settings)
             }
             
@@ -440,6 +441,7 @@ struct DiskActivitySectionView: View {
 struct StorageSectionView: View {
     let source: any StatsSource
     let isLocal: Bool
+    let isTrueNAS: Bool
     @EnvironmentObject var settings: UserSettings
     
     var body: some View {
@@ -481,22 +483,25 @@ struct StorageSectionView: View {
                 
                 if settings.storageSectionExpanded {
                     VStack(alignment: .leading, spacing: 6) {
-                        StatRow(label: "Usage", value: String(format: "%.1f%%", source.storageUsage))
-                        StatRow(label: "Used", value: formatBytes(source.storageUsed))
-                        StatRow(label: "Total", value: formatBytes(source.storageTotal))
+                        // For TrueNAS hosts we show per-pool details below and omit
+                        // the aggregate Usage/Used/Total rows to avoid duplication.
+                        if !isTrueNAS {
+                            StatRow(label: "Usage", value: String(format: "%.1f%%", source.storageUsage))
+                            StatRow(label: "Used", value: formatBytes(source.storageUsed))
+                            StatRow(label: "Total", value: formatBytes(source.storageTotal))
+                        }
+
                         // If the source exposes multiple filesystems (e.g., TrueNAS pools), list them
                         if let fss = source.filesystems, !fss.isEmpty {
-                            Divider()
                             ForEach(fss, id: \.device) { fs in
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(fs.mountPoint)
                                         .font(.system(.caption, design: .rounded))
                                         .foregroundColor(.secondary)
-                                    HStack {
+                                    HStack(spacing: 6) {
                                         Text(fs.device)
                                             .font(.system(.footnote, design: .rounded))
                                             .fontWeight(.medium)
-                                        Spacer()
                                         if let usage = fs.usagePercent {
                                             Text(String(format: "%.1f%%", usage))
                                                 .font(.system(.footnote, design: .rounded))
@@ -505,11 +510,10 @@ struct StorageSectionView: View {
                                                 .font(.system(.footnote, design: .rounded))
                                         }
                                     }
-                                    HStack {
+                                    HStack(spacing: 6) {
                                         Text("Used: \(formatBytes(fs.usedBytes != nil ? Double(fs.usedBytes!) : 0.0))")
                                             .font(.system(.caption2, design: .rounded))
                                             .foregroundColor(.secondary)
-                                        Spacer()
                                         Text("Total: \(formatBytes(fs.totalBytes != nil ? Double(fs.totalBytes!) : 0.0))")
                                             .font(.system(.caption2, design: .rounded))
                                             .foregroundColor(.secondary)
