@@ -84,9 +84,13 @@ class StatsCoordinator: ObservableObject {
     }
     
     private func startUpdateTimer() {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
+        // Schedule timer on the main run loop's common modes so it fires during UI tracking
+        updateTimer?.invalidate()
+        let timer = Timer(timeInterval: updateInterval, repeats: true) { [weak self] _ in
             self?.performUpdate()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
     }
     
     private func performUpdate() {
@@ -114,13 +118,44 @@ class StatsCoordinator: ObservableObject {
                 stats = try await agentClient.stats(host: host)
             }
             
-            // Update the source
+            // Update the source: create a new RemoteLinuxStatsSource instance
+            // initialized with the latest stats and seed it with history from
+            // the previous source so sparklines are preserved.
+            let previous = remoteSources[host.id]
+            let newSource = RemoteLinuxStatsSource(hostName: host.name, stats: stats, previous: previous)
+            remoteSources[host.id] = newSource
+            await MainActor.run {
+                // Assign the new source so views observe the change immediately
+                self.currentSource = nil
+                self.currentSource = newSource
+                isStale = false
+            }
+            // Log the exact values that were applied to the UI source
             if let source = remoteSources[host.id] {
-                await MainActor.run {
-                    source.updateStats(stats)
-                    isStale = false
+                // Prefer logging from the `stats` we just fetched to avoid timing mismatches
+                if let cpu = stats.cpu?.usagePercent {
+                    print(String(format: "[TrueNAS] CPU Usage: %.1f%%", cpu))
+                }
+
+                if let mem = stats.memory {
+                    let usedBytes = mem.usedBytes ?? 0
+                    let availBytes = mem.availableBytes ?? 0
+                    let usedGB = Double(usedBytes) / 1_073_741_824.0
+                    let availGB = Double(availBytes) / 1_073_741_824.0
+                    print(String(format: "[TrueNAS] Memory: used=%.2fGB available=%.2fGB", usedGB, availGB))
+                }
+
+                if let fss = stats.disk?.filesystems {
+                    for fs in fss {
+                        if let usage = fs.usagePercent {
+                            print(String(format: "[TrueNAS] Pool: %@ usage: %.1f%%", fs.device, usage))
+                        } else {
+                            print("[TrueNAS] Pool: \(fs.device) usage: —")
+                        }
+                    }
                 }
             }
+
             
             // Cache the stats
             if let encoded = try? JSONEncoder().encode(stats) {
@@ -138,7 +173,7 @@ class StatsCoordinator: ObservableObject {
         } catch {
             let errorMessage = error.localizedDescription
             updateHostStatus(host, status: .offline, error: errorMessage)
-            
+
             // Mark as stale
             await MainActor.run {
                 isStale = true

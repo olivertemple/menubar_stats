@@ -28,6 +28,8 @@ protocol StatsSource {
     var storageUsage: Double { get }
     var storageUsed: Double { get }
     var storageTotal: Double { get }
+    // Expose list of filesystems if available (e.g., pools on TrueNAS)
+    var filesystems: [RemoteLinuxStats.Filesystem]? { get }
     var diskReadSpeed: Double { get }
     var diskWriteSpeed: Double { get }
     var diskReadHistory: [Double] { get }

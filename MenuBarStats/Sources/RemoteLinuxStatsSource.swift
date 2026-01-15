@@ -21,12 +21,44 @@ class RemoteLinuxStatsSource: StatsSource {
             updateStats(stats)
         }
     }
+
+    /// Initialize a new source, optionally copying history from a previous source.
+    init(hostName: String, stats: RemoteLinuxStats? = nil, previous: RemoteLinuxStatsSource?) {
+        self.hostName = hostName
+
+        // If a previous source is provided, seed our history buffers with its values
+        if let prev = previous {
+            for v in prev.cpuHistory { cpuHistoryBuffer.add(v) }
+            for v in prev.memoryHistory { memoryHistoryBuffer.add(v) }
+            for v in prev.memoryPressureHistory { memoryPressureHistoryBuffer.add(v) }
+            for v in prev.diskReadHistory { diskReadHistoryBuffer.add(v) }
+            for v in prev.diskWriteHistory { diskWriteHistoryBuffer.add(v) }
+            for v in prev.temperatureHistory { temperatureHistoryBuffer.add(v) }
+            for v in prev.gpuHistory { gpuHistoryBuffer.add(v) }
+            for v in prev.networkUploadHistory { networkUploadHistoryBuffer.add(v) }
+            for v in prev.networkDownloadHistory { networkDownloadHistoryBuffer.add(v) }
+        }
+
+        if let stats = stats {
+            updateStats(stats)
+        }
+    }
     
     func updateStats(_ newStats: RemoteLinuxStats) {
+        // Preserve previous CPU value to avoid transient 0.0 spikes from TrueNAS
+        let previousCPU = self.stats?.cpu?.usagePercent
+
         self.stats = newStats
-        
+
         // Update history buffers
-        cpuHistoryBuffer.add(cpuUsage)
+        let fetchedCPU = newStats.cpu?.usagePercent ?? 0.0
+        let cpuToAdd: Double
+        if fetchedCPU == 0.0, let prev = previousCPU, prev > 0.0 {
+            cpuToAdd = prev
+        } else {
+            cpuToAdd = fetchedCPU
+        }
+        cpuHistoryBuffer.add(cpuToAdd)
         memoryHistoryBuffer.add(memoryUsage)
         memoryPressureHistoryBuffer.add(memoryPressure)
         
@@ -87,12 +119,12 @@ class RemoteLinuxStatsSource: StatsSource {
               let total = mem.totalBytes,
               let available = mem.availableBytes else { return 0.0 }
         let used = total - available
-        return Double(used) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(used) // bytes
     }
     
     var memoryTotal: Double {
         guard let total = stats?.memory?.totalBytes else { return 0.0 }
-        return Double(total) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(total) // bytes
     }
     
     var memoryHistory: [Double] {
@@ -106,14 +138,14 @@ class RemoteLinuxStatsSource: StatsSource {
     
     var memoryActive: Double {
         guard let active = stats?.memory?.usedBytes else { return 0.0 }
-        return Double(active) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(active) // bytes
     }
     
     var memoryInactive: Double {
         // Use buffers + cached as "inactive"
         guard let buffers = stats?.memory?.buffersBytes,
               let cached = stats?.memory?.cachedBytes else { return 0.0 }
-        return Double(buffers + cached) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(buffers + cached) // bytes
     }
     
     var memoryCompressed: Double {
@@ -123,12 +155,12 @@ class RemoteLinuxStatsSource: StatsSource {
     
     var memorySwapUsed: Double {
         guard let swap = stats?.memory?.swapUsedBytes else { return 0.0 }
-        return Double(swap) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(swap) // bytes
     }
     
     var memorySwapTotal: Double {
         guard let swap = stats?.memory?.swapTotalBytes else { return 0.0 }
-        return Double(swap) / (1024 * 1024 * 1024) // Convert to GB
+        return Double(swap) // bytes
     }
     
     var memoryPressure: Double {
@@ -142,22 +174,65 @@ class RemoteLinuxStatsSource: StatsSource {
     
     // Storage/Disk
     var storageUsage: Double {
-        // Use root filesystem usage
-        guard let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
-              let usage = rootFS.usagePercent else { return 0.0 }
-        return usage
+        // Prefer root filesystem, otherwise choose the filesystem with the largest totalBytes
+        if let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
+           let usage = rootFS.usagePercent {
+            return usage
+        }
+
+        if let fss = stats?.disk?.filesystems, !fss.isEmpty {
+            // Choose filesystem with largest totalBytes if available
+            let sorted = fss.sorted { (a, b) -> Bool in
+                let at = a.totalBytes ?? 0
+                let bt = b.totalBytes ?? 0
+                return at > bt
+            }
+            if let best = sorted.first, let usage = best.usagePercent {
+                return usage
+            }
+        }
+
+        return 0.0
     }
     
     var storageUsed: Double {
-        guard let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
-              let used = rootFS.usedBytes else { return 0.0 }
-        return Double(used) / (1024 * 1024 * 1024) // Convert to GB
+        if let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
+           let used = rootFS.usedBytes {
+            return Double(used) // bytes
+        }
+
+        if let fss = stats?.disk?.filesystems, !fss.isEmpty {
+            let sorted = fss.sorted { (a, b) -> Bool in
+                let at = a.totalBytes ?? 0
+                let bt = b.totalBytes ?? 0
+                return at > bt
+            }
+            if let best = sorted.first, let used = best.usedBytes {
+                return Double(used) // bytes
+            }
+        }
+
+        return 0.0
     }
     
     var storageTotal: Double {
-        guard let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
-              let total = rootFS.totalBytes else { return 0.0 }
-        return Double(total) / (1024 * 1024 * 1024) // Convert to GB
+        if let rootFS = stats?.disk?.filesystems?.first(where: { $0.mountPoint == "/" }),
+           let total = rootFS.totalBytes {
+            return Double(total) // bytes
+        }
+
+        if let fss = stats?.disk?.filesystems, !fss.isEmpty {
+            let sorted = fss.sorted { (a, b) -> Bool in
+                let at = a.totalBytes ?? 0
+                let bt = b.totalBytes ?? 0
+                return at > bt
+            }
+            if let best = sorted.first, let total = best.totalBytes {
+                return Double(total) // bytes
+            }
+        }
+
+        return 0.0
     }
     
     var diskReadSpeed: Double {
@@ -174,6 +249,11 @@ class RemoteLinuxStatsSource: StatsSource {
     
     var diskWriteHistory: [Double] {
         diskWriteHistoryBuffer.getValues()
+    }
+
+    // Expose filesystems (populated for remote TrueNAS pools)
+    var filesystems: [RemoteLinuxStats.Filesystem]? {
+        stats?.disk?.filesystems
     }
     
     // Network

@@ -49,6 +49,27 @@ struct UnifiedStatsView: View {
                     .environmentObject(hostManager)
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
+
+                // Diagnostic banner to help verify selected host and pool count
+                if let source = statsCoordinator.currentSource {
+                    if !isLocal && selectedHost.connectionMode == .truenasAPI {
+                        HStack {
+                            Text("DEBUG:")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundColor(.red)
+                                .fontWeight(.bold)
+                            Text("Selected: \(selectedHost.name)  Mode: \(selectedHost.connectionMode.rawValue)")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            let poolCount = source.filesystems?.count ?? 0
+                            Text("Pools: \(poolCount)")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 12)
+                    }
+                }
                 
                 // Offline/Error banner for remote hosts
                 if !isLocal && selectedHost.status == .offline {
@@ -81,8 +102,14 @@ struct UnifiedStatsView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
-                        // Use StatsSource for display
+                        // Use StatsSource for display. Show full sections (including Storage)
                         if let source = statsCoordinator.currentSource {
+                            // If this is a TrueNAS API host, surface pools in a compact header
+                            if !isLocal && selectedHost.connectionMode == .truenasAPI {
+                                TrueNASPoolsHeaderView(source: source)
+                                    .padding(.bottom, 6)
+                            }
+
                             StatsSectionsView(source: source, isLocal: isLocal)
                                 .environmentObject(settings)
                         } else {
@@ -400,6 +427,8 @@ struct DiskActivitySectionView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         StatRow(label: "Read", value: "\(formatBytes(source.diskReadSpeed))/s")
                         StatRow(label: "Write", value: "\(formatBytes(source.diskWriteSpeed))/s")
+                        // Filesystem/pool details intentionally omitted here to avoid
+                        // duplicating TrueNAS pool info shown in the Storage section.
                     }
                     .padding(.leading, 30)
                 }
@@ -427,9 +456,22 @@ struct StorageSectionView: View {
                             .font(.system(.body, design: .rounded))
                             .fontWeight(.medium)
                         if !settings.storageSectionExpanded {
-                            Text(String(format: "%.1f%%", source.storageUsage))
-                                .font(.system(.footnote, design: .rounded))
-                                .foregroundColor(.secondary)
+                            if let fss = source.filesystems, !fss.isEmpty {
+                                let parts = fss.map { fs -> String in
+                                    if let usage = fs.usagePercent {
+                                        return "\(fs.device) \(String(format: "%.1f%%", usage))"
+                                    } else {
+                                        return "\(fs.device) —"
+                                    }
+                                }
+                                Text(parts.joined(separator: "  ·  "))
+                                    .font(.system(.footnote, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text(String(format: "%.1f%%", source.storageUsage))
+                                    .font(.system(.footnote, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                     
@@ -442,6 +484,40 @@ struct StorageSectionView: View {
                         StatRow(label: "Usage", value: String(format: "%.1f%%", source.storageUsage))
                         StatRow(label: "Used", value: formatBytes(source.storageUsed))
                         StatRow(label: "Total", value: formatBytes(source.storageTotal))
+                        // If the source exposes multiple filesystems (e.g., TrueNAS pools), list them
+                        if let fss = source.filesystems, !fss.isEmpty {
+                            Divider()
+                            ForEach(fss, id: \.device) { fs in
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(fs.mountPoint)
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                    HStack {
+                                        Text(fs.device)
+                                            .font(.system(.footnote, design: .rounded))
+                                            .fontWeight(.medium)
+                                        Spacer()
+                                        if let usage = fs.usagePercent {
+                                            Text(String(format: "%.1f%%", usage))
+                                                .font(.system(.footnote, design: .rounded))
+                                        } else {
+                                            Text("—")
+                                                .font(.system(.footnote, design: .rounded))
+                                        }
+                                    }
+                                    HStack {
+                                        Text("Used: \(formatBytes(fs.usedBytes != nil ? Double(fs.usedBytes!) : 0.0))")
+                                            .font(.system(.caption2, design: .rounded))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("Total: \(formatBytes(fs.totalBytes != nil ? Double(fs.totalBytes!) : 0.0))")
+                                            .font(.system(.caption2, design: .rounded))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                            }
+                        }
                     }
                     .padding(.leading, 30)
                 }
@@ -617,6 +693,122 @@ struct AppleSiliconSectionView: View {
 }
 
 // MARK: - Helper Views
+
+/// Simplified view for TrueNAS hosts showing CPU, Memory and Pools
+struct TrueNASView: View {
+    let source: any StatsSource
+    @EnvironmentObject var settings: UserSettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // CPU line
+            HStack {
+                Text("[TrueNAS] CPU Usage:")
+                    .font(.system(.body, design: .rounded))
+                    .fontWeight(.medium)
+                Spacer()
+                Text(String(format: "%.1f%%", source.cpuUsage))
+                    .font(.system(.body, design: .rounded))
+                    .fontWeight(.semibold)
+            }
+
+            // Memory line (used + available)
+            HStack {
+                Text("[TrueNAS] Memory:")
+                    .font(.system(.body, design: .rounded))
+                    .fontWeight(.medium)
+                Spacer()
+                let used = source.memoryUsed
+                let total = source.memoryTotal
+                if total > 0 {
+                    let available = total - used
+                    Text(String(format: "used=%.2fGB available=%.2fGB", used, available))
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.semibold)
+                } else {
+                    Text("used=N/A available=N/A")
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.semibold)
+                }
+            }
+
+            // Pools list
+            if let pools = source.filesystems, !pools.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(pools, id: \.device) { fs in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text("[TrueNAS] Pool: \(fs.device) usage:")
+                                    .font(.system(.footnote, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                if let usage = fs.usagePercent {
+                                    Text(String(format: "%.1f%%", usage))
+                                        .font(.system(.footnote, design: .rounded))
+                                        .fontWeight(.medium)
+                                } else {
+                                    Text("—")
+                                        .font(.system(.footnote, design: .rounded))
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            HStack {
+                                Text("Used: \(formatBytes(fs.usedBytes != nil ? Double(fs.usedBytes!) : 0.0))")
+                                    .font(.system(.caption2, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("Total: \(formatBytes(fs.totalBytes != nil ? Double(fs.totalBytes!) : 0.0))")
+                                    .font(.system(.caption2, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 6)
+                    }
+                }
+            } else {
+                Text("No pools detected")
+                    .foregroundColor(.secondary)
+                    .font(.system(.caption, design: .rounded))
+            }
+        }
+    }
+}
+
+/// Compact header view that lists TrueNAS pools and their usage.
+struct TrueNASPoolsHeaderView: View {
+    let source: any StatsSource
+
+    var body: some View {
+        if let pools = source.filesystems, !pools.isEmpty {
+            HStack(spacing: 8) {
+                ForEach(pools, id: \.device) { fs in
+                    HStack(spacing: 6) {
+                        Text(fs.device)
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundColor(.secondary)
+                        if let usage = fs.usagePercent {
+                            Text(String(format: "%.0f%%", usage))
+                                .font(.system(.caption2, design: .rounded))
+                                .fontWeight(.medium)
+                        } else {
+                            Text("—")
+                                .font(.system(.caption2, design: .rounded))
+                                .fontWeight(.medium)
+                        }
+                        if fs.device != pools.last?.device {
+                            Text("·")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                Spacer()
+            }
+            .font(.system(.caption, design: .rounded))
+            .foregroundColor(.secondary)
+        }
+    }
+}
 
 struct StatRow: View {
     let label: String

@@ -30,6 +30,7 @@ class LocalStatsSource: StatsSource {
     var storageUsage: Double { monitor.storageUsage }
     var storageUsed: Double { monitor.storageUsed }
     var storageTotal: Double { monitor.storageTotal }
+    var filesystems: [RemoteLinuxStats.Filesystem]? { nil }
     var diskReadSpeed: Double { monitor.diskReadSpeed }
     var diskWriteSpeed: Double { monitor.diskWriteSpeed }
     var diskReadHistory: [Double] { monitor.diskReadHistory }

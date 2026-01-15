@@ -40,6 +40,7 @@
 		A775827D2F1969E100614770 /* RemoteLinuxStatsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */; };
 		A775827F2F19703700614770 /* UnifiedStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A775827E2F19703700614770 /* UnifiedStatsView.swift */; };
 		A77582812F19708700614770 /* StatsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582802F19708700614770 /* StatsCoordinator.swift */; };
+		A77582832F1976CE00614770 /* TrueNASAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582822F1976CE00614770 /* TrueNASAPIClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +80,7 @@
 		A77582772F1969E100614770 /* StatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsSource.swift; path = Protocols/StatsSource.swift; sourceTree = "<group>"; };
 		A775827E2F19703700614770 /* UnifiedStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedStatsView.swift; sourceTree = "<group>"; };
 		A77582802F19708700614770 /* StatsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsCoordinator.swift; path = Managers/StatsCoordinator.swift; sourceTree = "<group>"; };
+		A77582822F1976CE00614770 /* TrueNASAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TrueNASAPIClient.swift; path = Network/TrueNASAPIClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 		A1000028000000000000001 /* MenuBarStats */ = {
 			isa = PBXGroup;
 			children = (
+				A77582822F1976CE00614770 /* TrueNASAPIClient.swift */,
 				A77582802F19708700614770 /* StatsCoordinator.swift */,
 				A77582722F1969E100614770 /* Host.swift */,
 				A77582732F1969E100614770 /* LocalStatsSource.swift */,
@@ -268,6 +271,7 @@
 				A775826B2F1969AB00614770 /* HostEditView.swift in Sources */,
 				A775826C2F1969AB00614770 /* HostSelectorView.swift in Sources */,
 				A775826D2F1969AB00614770 /* HostManagementView.swift in Sources */,
+				A77582832F1976CE00614770 /* TrueNASAPIClient.swift in Sources */,
 				A1000013000000000000001 /* TemperatureMonitor.swift in Sources */,
 				A77582812F19708700614770 /* StatsCoordinator.swift in Sources */,
 				A1000015000000000000001 /* PortMonitor.swift in Sources */,
@@ -465,7 +469,7 @@
 				A1000042000000000000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		A1000038000000000000001 /* Build configuration list for PBXProject "MenuBarStats" */ = {
 			isa = XCConfigurationList;
@@ -474,7 +478,7 @@
 				A1000040000000000000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

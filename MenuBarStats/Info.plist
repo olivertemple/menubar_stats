@@ -41,6 +41,15 @@
 				<key>NSExceptionRequiresForwardSecrecy</key>
 				<false/>
 			</dict>
+			<key>100.102.225.112</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<false/>
+			</dict>
 		</dict>
 	</dict>
 </dict>
