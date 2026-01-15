@@ -32,7 +32,7 @@ struct GlassRow<Content: View>: View {
     }
     
     var body: some View {
-        content
+        let base = content
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
@@ -41,16 +41,24 @@ struct GlassRow<Content: View>: View {
                     .opacity(isHovered ? 1.0 : 0.8)
             )
             .scaleEffect(isHovered ? 1.01 : 1.0)
-            .contentShape(Rectangle())
             .onHover { hovering in
                 withAnimation(.easeInOut(duration: 0.15)) {
                     isHovered = hovering
                 }
             }
-            .onTapGesture {
-                action?()
-            }
             .animation(.easeInOut(duration: 0.15), value: isHovered)
+
+        // Only install a tap gesture when an explicit action is provided.
+        if action != nil {
+            base
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    action?()
+                }
+        } else {
+            base
+                .contentShape(Rectangle())
+        }
     }
 }
 
@@ -91,6 +99,7 @@ struct ChevronAccessory: View {
             .foregroundColor(.secondary)
             .opacity(0.6)
             .rotationEffect(.degrees(isExpanded ? 90 : 0))
+            .frame(width: 14, alignment: .center)
             .animation(.easeInOut(duration: 0.15), value: isExpanded)
     }
 }

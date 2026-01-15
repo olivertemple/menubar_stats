@@ -26,11 +26,11 @@ struct MenuBarView: View {
                         if settings.showCPUInDetail {
                             GlassRow(action: { settings.cpuSectionExpanded.toggle() }) {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    HStack(spacing: 10) {
+                                    HStack(alignment: .top, spacing: 10) {
                                         Image(systemName: "cpu")
                                             .font(.system(size: 20))
                                             .foregroundColor(.blue)
-                                            .frame(width: 20)
+                                            .frame(width: 20, height: 20, alignment: .center)
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("CPU")
@@ -70,11 +70,11 @@ struct MenuBarView: View {
                     if settings.showGPUInDetail {
                         GlassRow(action: { settings.gpuSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "videoprojector")
                                         .font(.system(size: 20))
                                         .foregroundColor(.purple)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("GPU")
@@ -121,11 +121,11 @@ struct MenuBarView: View {
                     if settings.showMemoryInDetail {
                         GlassRow(action: { settings.memorySectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "memorychip")
                                         .font(.system(size: 20))
                                         .foregroundColor(.blue)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Memory")
@@ -185,11 +185,11 @@ struct MenuBarView: View {
                     if settings.showNetworkInDetail {
                         GlassRow(action: { settings.networkSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "network")
                                         .font(.system(size: 20))
                                         .foregroundColor(.green)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Network")
@@ -246,11 +246,11 @@ struct MenuBarView: View {
                     if settings.showStorageInDetail {
                         GlassRow(action: { settings.storageSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "internaldrive")
                                         .font(.system(size: 20))
                                         .foregroundColor(.indigo)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Storage")
@@ -283,11 +283,11 @@ struct MenuBarView: View {
                     if settings.showBatteryInDetail {
                         GlassRow(action: { settings.batterySectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "battery.100")
                                         .font(.system(size: 20))
                                         .foregroundColor(.green)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Battery")
@@ -350,11 +350,11 @@ struct MenuBarView: View {
                     if settings.showDiskActivityInDetail {
                         GlassRow(action: { settings.diskActivitySectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "speedometer")
                                         .font(.system(size: 20))
                                         .foregroundColor(.cyan)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Disk Activity")
@@ -406,11 +406,11 @@ struct MenuBarView: View {
                     if settings.showDiskHealthInDetail {
                         GlassRow(action: { settings.diskHealthSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "checkmark.shield")
                                         .font(.system(size: 20))
                                         .foregroundColor(.green)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Disk Health")
@@ -453,11 +453,11 @@ struct MenuBarView: View {
                     if settings.showTemperatureInDetail {
                         GlassRow(action: { settings.temperatureSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "thermometer")
                                         .font(.system(size: 20))
                                         .foregroundColor(.red)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Temperature")
@@ -523,11 +523,11 @@ struct MenuBarView: View {
                     if settings.showAppleSiliconInDetail && systemMonitor.isAppleSilicon {
                         GlassRow(action: { settings.appleSiliconSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "cpu.fill")
                                         .font(.system(size: 20))
                                         .foregroundColor(.purple)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Apple Silicon")
@@ -576,7 +576,7 @@ struct MenuBarView: View {
                                     Image(systemName: "network.badge.shield.half.filled")
                                         .font(.system(size: 20))
                                         .foregroundColor(.orange)
-                                        .frame(width: 20)
+                                        .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Open Ports")
@@ -677,11 +677,51 @@ struct MenuBarView: View {
             .padding(.bottom, 12)
         }
         .frame(width: 420, height: 600)
-        }
     }
+
     
+}
+
+}
+
+struct StatRow: View {
+    let label: String
+    let value: String
     
-    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(.footnote, design: .rounded))
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(.footnote, design: .rounded))
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+struct MenuBarView_Previews: PreviewProvider {
+    static var previews: some View {
+        MenuBarView()
+            .environmentObject(SystemMonitor())
+            .environmentObject(UserSettings())
+    }
+}
+
+// Custom button style that avoids changing colors/opacity on press.
+struct NoHighlightButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+extension MenuBarView {
     private func killPort(_ portInfo: PortInfo) {
         let alert = NSAlert()
         alert.messageText = "Kill Process?"
@@ -689,7 +729,7 @@ struct MenuBarView: View {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Kill")
         alert.addButton(withTitle: "Cancel")
-        
+
         if alert.runModal() == .alertFirstButtonReturn {
             let portMonitor = PortMonitor()
             if portMonitor.killProcess(pid: portInfo.pid) {
@@ -703,7 +743,7 @@ struct MenuBarView: View {
             }
         }
     }
-    
+
     private func formatBytes(_ bytes: Double) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .binary
@@ -771,42 +811,5 @@ struct MenuBarView: View {
             return String(format: "P: %.0f%%", pCore)
         }
         return "—"
-    }
-}
-
-struct StatRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.system(.footnote, design: .rounded))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(.footnote, design: .rounded))
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-                .monospacedDigit()
-        }
-        .padding(.vertical, 2)
-    }
-}
-
-struct MenuBarView_Previews: PreviewProvider {
-    static var previews: some View {
-        MenuBarView()
-            .environmentObject(SystemMonitor())
-            .environmentObject(UserSettings())
-    }
-}
-
-// Custom button style that avoids changing colors/opacity on press.
-struct NoHighlightButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

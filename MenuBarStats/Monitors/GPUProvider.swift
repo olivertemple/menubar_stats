@@ -93,7 +93,9 @@ class GPUProvider: StatsProvider {
         }
         
         // If we couldn't get utilization from IOKit, return -1 to indicate unavailable
-        return maxUtilization > 0 ? maxUtilization : -1.0
+        // Treat 0.0 utilization as a valid (available) reading so we don't flip
+        // availability when the GPU is idle.
+        return maxUtilization >= 0 ? maxUtilization : -1.0
     }
     
     func reset() {

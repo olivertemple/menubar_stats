@@ -26,6 +26,7 @@
 		A775824F2F1941E700614770 /* BatteryProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582492F1941E700614770 /* BatteryProvider.swift */; };
 		A77582512F1941F200614770 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582502F1941F200614770 /* SparklineView.swift */; };
 		A77582542F19439600614770 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582532F19439600614770 /* NetworkMonitor.swift */; };
+		A77582562F1954C800614770 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582552F1954C800614770 /* GlassComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		A775824B2F1941E700614770 /* GPUProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUProvider.swift; sourceTree = "<group>"; };
 		A77582502F1941F200614770 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
 		A77582532F19439600614770 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		A77582552F1954C800614770 /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +118,7 @@
 		A1000031000000000000001 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A77582552F1954C800614770 /* GlassComponents.swift */,
 				A77582502F1941F200614770 /* SparklineView.swift */,
 				A1000018000000000000001 /* MenuBarView.swift */,
 				A1000020000000000000001 /* SettingsView.swift */,
@@ -208,6 +211,7 @@
 				A775824D2F1941E700614770 /* GPUProvider.swift in Sources */,
 				A775824E2F1941E700614770 /* AppleSiliconProvider.swift in Sources */,
 				A77582542F19439600614770 /* NetworkMonitor.swift in Sources */,
+				A77582562F1954C800614770 /* GlassComponents.swift in Sources */,
 				A775824F2F1941E700614770 /* BatteryProvider.swift in Sources */,
 				A77582462F1941DB00614770 /* HistoryBuffer.swift in Sources */,
 				A77582472F1941DB00614770 /* StatsProvider.swift in Sources */,

@@ -89,6 +89,7 @@ struct GeneralSettingsView: View {
                     .font(.headline)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }
@@ -150,6 +151,7 @@ struct MenuBarSettingsView: View {
                     .font(.headline)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }
@@ -203,6 +205,7 @@ struct DetailViewSettingsView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }

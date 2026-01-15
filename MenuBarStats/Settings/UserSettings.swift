@@ -60,8 +60,34 @@ class UserSettings: ObservableObject {
     init() {}
     
     private func setLaunchAtLogin(_ enabled: Bool) {
-        // This would require adding a login item
-        // For now, we'll provide instructions in the settings UI
+        // Use AppleScript via `osascript` to add/remove a login item for this app.
+        // This avoids adding a separate helper bundle while providing a
+        // reasonable user-facing behavior on macOS.
+        let bundle = Bundle.main
+        let appPath = bundle.bundlePath.replacingOccurrences(of: "\"", with: "\\\"")
+        let appName = (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String) ?? bundle.bundleURL.deletingPathExtension().lastPathComponent
+
+        func runAppleScript(_ script: String) {
+            let proc = Process()
+            proc.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+            proc.arguments = ["-e", script]
+            do {
+                try proc.run()
+                proc.waitUntilExit()
+            } catch {
+                print("Failed to run osascript: \(error)")
+            }
+        }
+
+        if enabled {
+            // Add login item
+            let script = "tell application \"System Events\" to make login item at end with properties {path:\"\(appPath)\", name:\"\(appName)\", hidden:false}"
+            runAppleScript(script)
+        } else {
+            // Remove matching login items by path or name
+            let script = "tell application \"System Events\" to delete (every login item whose path is \"\(appPath)\" or name is \"\(appName)\")"
+            runAppleScript(script)
+        }
     }
 }
 

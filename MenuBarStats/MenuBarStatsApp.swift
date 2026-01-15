@@ -100,6 +100,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             if popover.isShown {
                 popover.performClose(nil)
             } else {
+                // Ensure the app is active so the popover window becomes focused immediately.
+                NSApp.activate(ignoringOtherApps: true)
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 addEventMonitors()
             }
