@@ -14,7 +14,8 @@ class AppleSiliconProvider: StatsProvider {
     typealias StatsType = AppleSiliconStats
     
     private let isAppleSilicon: Bool
-    private var previousCPUInfo: [host_cpu_load_info] = []
+    // Store previous tick counts per core: [[user, system, idle, nice]]
+    private var previousCPUTicks: [[UInt64]] = []
     
     init() {
         // Detect if running on Apple Silicon
@@ -68,81 +69,88 @@ class AppleSiliconProvider: StatsProvider {
             &cpuLoadInfo,
             &processorMsgCount
         )
-        
+
         guard result == KERN_SUCCESS, let cpuInfo = cpuLoadInfo else {
             return (nil, nil)
         }
-        
+
         let cpuLoad = UnsafeMutableRawPointer(cpuInfo).assumingMemoryBound(to: processor_cpu_load_info.self)
-        
-        // On Apple Silicon M-series:
-        // M1/M1 Pro/M1 Max/M1 Ultra: Typically 4 P-cores + 4 E-cores (or more)
-        // M2/M2 Pro/M2 Max/M2 Ultra: Similar configuration
-        // Without detailed core info, we make a best-effort guess:
-        // - Typically first cores are E-cores, later cores are P-cores (or vice versa)
-        // - This varies by chip model
-        
+
+        // Build current tick snapshot
+        var currentTicks: [[UInt64]] = []
+        for i in 0..<Int(processorCount) {
+            let cpu = cpuLoad[i]
+            let user = UInt64(cpu.cpu_ticks.0)
+            let system = UInt64(cpu.cpu_ticks.1)
+            let idle = UInt64(cpu.cpu_ticks.2)
+            let nice = UInt64(cpu.cpu_ticks.3)
+            currentTicks.append([user, system, idle, nice])
+        }
+
+        // If we don't have a previous snapshot or the counts differ, store and return nil
+        guard previousCPUTicks.count == currentTicks.count && previousCPUTicks.count > 0 else {
+            previousCPUTicks = currentTicks
+            return (nil, nil)
+        }
+
+        // Compute per-core delta usage
+        var perCoreUsages: [Double] = []
+        for i in 0..<currentTicks.count {
+            let prev = previousCPUTicks[i]
+            let curr = currentTicks[i]
+            let du = curr[0] &- prev[0]
+            let ds = curr[1] &- prev[1]
+            let di = curr[2] &- prev[2]
+            let dn = curr[3] &- prev[3]
+            let total = du + ds + di + dn
+            if total > 0 {
+                let usage = (Double(du + ds + dn) / Double(total)) * 100.0
+                perCoreUsages.append(usage)
+            } else {
+                perCoreUsages.append(0.0)
+            }
+        }
+
+        // Update previous snapshot
+        previousCPUTicks = currentTicks
+
         // Get system info about cores
         var perfLevelCount: UInt32 = 0
         var perfLevelCountSize = MemoryLayout<UInt32>.size
         sysctlbyname("hw.nperflevels", &perfLevelCount, &perfLevelCountSize, nil, 0)
-        
+
         if perfLevelCount >= 2 {
-            // System has multiple performance levels (P and E cores)
-            // Try to get count of each type
             var eCoreCount: UInt32 = 0
             var pCoreCount: UInt32 = 0
             var size = MemoryLayout<UInt32>.size
-            
             sysctlbyname("hw.perflevel0.physicalcpu", &eCoreCount, &size, nil, 0)
             sysctlbyname("hw.perflevel1.physicalcpu", &pCoreCount, &size, nil, 0)
-            
-            // Calculate average usage for each type
-            // Note: Core assignment may not be exactly in order
+
             if eCoreCount > 0 && pCoreCount > 0 {
+                // Average usages for groups
                 var eTotal: Double = 0
                 var pTotal: Double = 0
-                
-                // Assumption: First eCoreCount cores are E-cores
-                for i in 0..<Int(eCoreCount) {
-                    if i < Int(processorCount) {
-                        let cpu = cpuLoad[i]
-                        let user = Double(cpu.cpu_ticks.0)
-                        let system = Double(cpu.cpu_ticks.1)
-                        let idle = Double(cpu.cpu_ticks.2)
-                        let nice = Double(cpu.cpu_ticks.3)
-                        let total = user + system + idle + nice
-                        if total > 0 {
-                            eTotal += ((user + system + nice) / total) * 100.0
-                        }
+
+                // Heuristic: assume lower-index cores are E-cores
+                let eCount = Int(eCoreCount)
+                for i in 0..<currentTicks.count {
+                    if i < eCount {
+                        eTotal += perCoreUsages[i]
+                    } else {
+                        pTotal += perCoreUsages[i]
                     }
                 }
-                
-                // Remaining cores are P-cores
-                for i in Int(eCoreCount)..<Int(processorCount) {
-                    let cpu = cpuLoad[i]
-                    let user = Double(cpu.cpu_ticks.0)
-                    let system = Double(cpu.cpu_ticks.1)
-                    let idle = Double(cpu.cpu_ticks.2)
-                    let nice = Double(cpu.cpu_ticks.3)
-                    let total = user + system + idle + nice
-                    if total > 0 {
-                        pTotal += ((user + system + nice) / total) * 100.0
-                    }
-                }
-                
+
                 let pCoreUsage = pCoreCount > 0 ? pTotal / Double(pCoreCount) : 0
                 let eCoreUsage = eCoreCount > 0 ? eTotal / Double(eCoreCount) : 0
-                
                 return (pCoreUsage, eCoreUsage)
             }
         }
-        
-        // If we can't determine breakdown, return nil
+
         return (nil, nil)
     }
     
     func reset() {
-        previousCPUInfo.removeAll()
+        previousCPUTicks.removeAll()
     }
 }

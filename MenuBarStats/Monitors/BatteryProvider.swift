@@ -78,60 +78,41 @@ class BatteryProvider: StatsProvider {
         let cycleCount = getBatteryCycleCount()
         
         // Max capacity health percentage (with fallbacks)
+        // Determine design capacity from registry if possible
         var designCapacity = getDesignCapacity()
-        // Try to read design capacity from the IOPS dictionary if available
         if designCapacity <= 0 {
             if let infoDesign = info["DesignCapacity"] as? Int {
                 designCapacity = Double(infoDesign)
             }
         }
 
-        let currentMaxCapacity = Double(maxCapacity)
-        var healthPercent: Double
-        // If the IOPS max capacity value is <= 100 it's likely already a percentage (e.g. 98).
-        // However Settings.app may compute percentage from registry absolute capacities (mAh).
-        if maxCapacity <= 100 {
-            var usedFallbackPercent = Double(maxCapacity)
-            if designCapacity > 0 {
-                // Try registry keys that may contain the absolute full-charge capacity
-                let registryKeys = ["MaxCapacity", "FullChargeCapacity", "LastFullChargeCapacity", "MaxCapacityRaw"]
-                var registryMax: Int? = nil
-                for key in registryKeys {
-                    if let v = getRegistryIntProperty(key) {
-                        registryMax = v
-                        break
-                    }
-                }
+        // Compute displayed maximum capacity as a percentage (0-100)
+        // If we have a design capacity and maxCapacity looks like an absolute value (>100),
+        // compute percentage = maxCapacity / designCapacity * 100.
+        // Otherwise, if maxCapacity is already <= 100, treat it as the displayed percentage.
+        var displayedMaxCapacity: Double
+        if designCapacity > 0 && Double(maxCapacity) > 100.0 {
+            displayedMaxCapacity = (Double(maxCapacity) / designCapacity) * 100.0
+        } else {
+            displayedMaxCapacity = Double(maxCapacity)
+        }
 
-                if let reg = registryMax {
-                    let regDouble = Double(reg)
-                    usedFallbackPercent = (regDouble / designCapacity) * 100.0
+        // As a fallback, try registry keys to compute a more accurate percentage
+        if designCapacity > 0 && displayedMaxCapacity <= 0 {
+            let registryKeys = ["MaxCapacity", "FullChargeCapacity", "LastFullChargeCapacity", "MaxCapacityRaw"]
+            for key in registryKeys {
+                if let v = getRegistryIntProperty(key) {
+                    displayedMaxCapacity = (Double(v) / designCapacity) * 100.0
+                    break
                 }
             }
-            healthPercent = min(max(usedFallbackPercent, 0.0), 100.0)
-        } else if designCapacity > 0 {
-            // Treat maxCapacity as absolute (mAh) and compare to design capacity
-            healthPercent = (currentMaxCapacity / designCapacity) * 100.0
-        } else {
-            // Unknown design capacity and absolute maxCapacity looks like a raw value — be conservative
-            healthPercent = 100.0
         }
 
         // Clamp to sensible range
-        healthPercent = min(max(healthPercent, 0.0), 100.0)
+        displayedMaxCapacity = min(max(displayedMaxCapacity, 0.0), 100.0)
 
-        // Health status will be computed from the displayed capacity below
-        var health: String = "N/A"
-
-        // Debug logging to help diagnose discrepancies with Settings.app
-        print("[BatteryProvider] debug: currentCapacity=\(currentCapacity) maxCapacity=\(maxCapacity) designCapacity=\(designCapacity) healthPercent=\(healthPercent) cycleCount=\(cycleCount)")
-
-        // Some systems report a small 'healthPercent' (degradation) where Settings shows remaining capacity (~98).
-        // To match Settings.app for cases where healthPercent represents the degradation, invert it for display.
-        let displayedMaxCapacity = min(max(100.0 - healthPercent, 0.0), 100.0)
-        print("[BatteryProvider] debug: displayedMaxCapacity=\(displayedMaxCapacity) (100 - healthPercent)")
-
-        // Compute health based on the displayed capacity so UI 'Health' matches 'Max Capacity'
+        // Compute a simple health string based on displayed maximum capacity
+        let health: String
         if displayedMaxCapacity >= 80.0 {
             health = "Good"
         } else if displayedMaxCapacity >= 60.0 {
