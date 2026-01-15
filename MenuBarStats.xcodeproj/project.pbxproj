@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		89C7C695670D4FA880F4DDD5 /* AppleSiliconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FCC5811FC3443FAD647DC1 /* AppleSiliconProvider.swift */; };
+		74AFD4034F30461196DDFDDB /* DiskProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32D30E1437C84DCEB3B3971C /* DiskProvider.swift */; };
+		515F8164C60D462DAB9C62FF /* BatteryProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76739EE053C24D97AC885B52 /* BatteryProvider.swift */; };
+		AF6C72C90DCB47679243B0D7 /* GPUProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F06FA5DD834C42B64FA52A /* GPUProvider.swift */; };
+		D189F93614A3402793F96436 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0EEB158A084E2EBBBDC352 /* SparklineView.swift */; };
+		F5587E18EFB146D0AFA4EE87 /* HistoryBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764858E700CE4A9A83F8108E /* HistoryBuffer.swift */; };
+		2349512D5409499991261D6A /* StatsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06149DB48CB4F9A9D04F778 /* StatsProvider.swift */; };
 		A1000001000000000000001 /* MenuBarStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002000000000000001 /* MenuBarStatsApp.swift */; };
 		A1000003000000000000001 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000000000000001 /* SystemMonitor.swift */; };
 		A1000005000000000000001 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000000000000001 /* NetworkMonitor.swift */; };
@@ -22,6 +29,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A2FCC5811FC3443FAD647DC1 /* AppleSiliconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSiliconProvider.swift; sourceTree = "<group>"; };
+		32D30E1437C84DCEB3B3971C /* DiskProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskProvider.swift; sourceTree = "<group>"; };
+		76739EE053C24D97AC885B52 /* BatteryProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryProvider.swift; sourceTree = "<group>"; };
+		F1F06FA5DD834C42B64FA52A /* GPUProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUProvider.swift; sourceTree = "<group>"; };
+		EA0EEB158A084E2EBBBDC352 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
+		764858E700CE4A9A83F8108E /* HistoryBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryBuffer.swift; sourceTree = "<group>"; };
+		A06149DB48CB4F9A9D04F778 /* StatsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsProvider.swift; sourceTree = "<group>"; };
 		A1000000000000000000001 /* MenuBarStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuBarStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000002000000000000001 /* MenuBarStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatsApp.swift; sourceTree = "<group>"; };
 		A1000004000000000000001 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
@@ -178,6 +192,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2349512D5409499991261D6A /* StatsProvider.swift in Sources */,
+				F5587E18EFB146D0AFA4EE87 /* HistoryBuffer.swift in Sources */,
+				D189F93614A3402793F96436 /* SparklineView.swift in Sources */,
+				AF6C72C90DCB47679243B0D7 /* GPUProvider.swift in Sources */,
+				515F8164C60D462DAB9C62FF /* BatteryProvider.swift in Sources */,
+				74AFD4034F30461196DDFDDB /* DiskProvider.swift in Sources */,
+				89C7C695670D4FA880F4DDD5 /* AppleSiliconProvider.swift in Sources */,
 				A1000001000000000000001 /* MenuBarStatsApp.swift in Sources */,
 				A1000003000000000000001 /* SystemMonitor.swift in Sources */,
 				A1000005000000000000001 /* NetworkMonitor.swift in Sources */,
