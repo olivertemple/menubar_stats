@@ -156,7 +156,12 @@ MenuBarStats/
 ## ⚠️ Known Limitations
 
 ### Temperature Monitoring
-Temperature readings may show 0°C on modern Macs due to System Management Controller (SMC) access restrictions. This is a macOS security limitation.
+Temperature readings require SMC (System Management Controller) access. The app includes IOKit SMC support, but results vary by Mac model and macOS version:
+- **Intel Macs**: May work on some models, especially older ones
+- **Apple Silicon**: More restricted, may show 0°C
+- See [TEMPERATURE.md](TEMPERATURE.md) for detailed information and alternatives
+
+For reliable temperature monitoring, consider third-party tools like iStat Menus or TG Pro.
 
 ### Network Speeds
 Initial readings after launch may be inaccurate. Wait a few seconds for accurate speed measurements.
