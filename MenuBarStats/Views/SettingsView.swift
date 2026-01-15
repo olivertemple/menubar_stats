@@ -126,6 +126,11 @@ struct MenuBarSettingsView: View {
                     }
                     .pickerStyle(.menu)
                 }
+                
+                Text("The menu bar displays stats from the currently selected host (local or remote)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .padding(.top, 4)
             } header: {
                 Text("Menu Bar Display")
                     .font(.headline)
@@ -207,7 +212,7 @@ struct DetailViewSettingsView: View {
             .padding(.bottom, 12)
             
             Section {
-                Text("Select which statistics to display in the detailed view when you click the menu bar icon")
+                Text("Select which statistics to display in the detailed view when you click the menu bar icon. These settings apply to both local and remote hosts.")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
