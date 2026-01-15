@@ -5,12 +5,15 @@ struct MenuBarStatsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var systemMonitor = SystemMonitor()
     @StateObject private var settings = UserSettings()
+    @StateObject private var hostManager = HostManager()
+    @StateObject private var statsCoordinator = StatsCoordinator()
     
     var body: some Scene {
         Settings {
             SettingsView()
                 .environmentObject(settings)
                 .environmentObject(systemMonitor)
+                .environmentObject(hostManager)
         }
     }
     
@@ -18,6 +21,8 @@ struct MenuBarStatsApp: App {
         // Share instances with AppDelegate
         _systemMonitor = StateObject(wrappedValue: SystemMonitor.shared)
         _settings = StateObject(wrappedValue: UserSettings.shared)
+        _hostManager = StateObject(wrappedValue: HostManager.shared)
+        _statsCoordinator = StateObject(wrappedValue: StatsCoordinator.shared)
     }
 }
 
@@ -37,6 +42,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         UserSettings.shared
     }
     
+    private var hostManager: HostManager {
+        HostManager.shared
+    }
+    
+    private var statsCoordinator: StatsCoordinator {
+        StatsCoordinator.shared
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -49,6 +62,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         
         // Start monitoring with user's configured interval
         systemMonitor.startMonitoring(interval: settings.refreshInterval)
+        
+        // Start stats coordinator for remote host monitoring
+        statsCoordinator.start()
         
         // Update menu bar with user's configured interval
         startMenuBarUpdateTimer()
@@ -77,6 +93,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             rootView: MenuBarView()
                 .environmentObject(systemMonitor)
                 .environmentObject(settings)
+                .environmentObject(hostManager)
+                .environmentObject(statsCoordinator)
         )
         popover.delegate = self
         self.popover = popover
@@ -112,6 +130,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         // Activate the app and open settings window
         NSApp.activate(ignoringOtherApps: true)
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+
+    // Show or create the Settings window (responder target for "showSettingsWindow:")
+    @objc func showSettingsWindow(_ sender: Any?) {
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Reuse window if already created
+        if let existing = NSApp.windows.first(where: { $0.identifier?.rawValue == "MenuBarStats.SettingsWindow" }) {
+            existing.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        // Create a new settings window using the same SettingsView
+        let settingsVC = NSHostingController(rootView: SettingsView()
+            .environmentObject(systemMonitor)
+            .environmentObject(settings)
+            .environmentObject(hostManager)
+        )
+
+        let window = NSWindow(contentViewController: settingsVC)
+        window.title = "Settings"
+        window.identifier = NSUserInterfaceItemIdentifier(rawValue: "MenuBarStats.SettingsWindow")
+        window.setContentSize(NSSize(width: 540, height: 500))
+        window.styleMask.insert([.titled, .closable, .resizable])
+        window.center()
+        window.makeKeyAndOrderFront(nil)
     }
 
     @objc func applicationDidResignActive(_ notification: Notification) {
@@ -178,58 +222,68 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     
     func updateMenuBarDisplay() {
         guard let button = statusItem?.button else { return }
-        
+        // Prefer stats from the most-recently viewed device via StatsCoordinator
+        let source = statsCoordinator.currentSource
+
         var displayText = ""
-        
+
         // Show primary stat
         switch settings.menuBarPrimaryStat {
         case .cpu:
-            displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+            displayText += String(format: "CPU: %.0f%%", source?.cpuUsage ?? systemMonitor.cpuUsage)
         case .memory:
-            displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+            displayText += String(format: "RAM: %.0f%%", source?.memoryUsage ?? systemMonitor.memoryUsage)
         case .network:
-            displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
+            displayText += formatBytes(source?.networkUploadSpeed ?? systemMonitor.networkUploadSpeed) + "↑"
         case .storage:
-            displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+            displayText += String(format: "Disk: %.0f%%", source?.storageUsage ?? systemMonitor.storageUsage)
         case .battery:
-            if systemMonitor.batteryAvailable {
-                let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
-                displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+            if (source?.batteryAvailable ?? systemMonitor.batteryAvailable) {
+                let isCharging = source?.batteryIsCharging ?? systemMonitor.batteryIsCharging
+                let icon = isCharging ? "⚡" : "🔋"
+                let percent = source?.batteryPercentage ?? systemMonitor.batteryPercentage
+                displayText += String(format: "%@%.0f%%", icon, percent)
             } else {
                 displayText += "No Battery"
             }
         case .disk:
-            let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
-            let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+            let read = source?.diskReadSpeed ?? systemMonitor.diskReadSpeed
+            let write = source?.diskWriteSpeed ?? systemMonitor.diskWriteSpeed
+            let readMB = read / (1024 * 1024)
+            let writeMB = write / (1024 * 1024)
             displayText += String(format: "R:%.0fMB W:%.0fMB", readMB, writeMB)
         }
-        
+
         // Show secondary stat if enabled
         if settings.showSecondaryStatInMenuBar {
             displayText += " | "
             switch settings.menuBarSecondaryStat {
             case .cpu:
-                displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+                displayText += String(format: "CPU: %.0f%%", source?.cpuUsage ?? systemMonitor.cpuUsage)
             case .memory:
-                displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+                displayText += String(format: "RAM: %.0f%%", source?.memoryUsage ?? systemMonitor.memoryUsage)
             case .network:
-                displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
+                displayText += formatBytes(source?.networkDownloadSpeed ?? systemMonitor.networkDownloadSpeed) + "↓"
             case .storage:
-                displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+                displayText += String(format: "Disk: %.0f%%", source?.storageUsage ?? systemMonitor.storageUsage)
             case .battery:
-                if systemMonitor.batteryAvailable {
-                    let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
-                    displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+                if (source?.batteryAvailable ?? systemMonitor.batteryAvailable) {
+                    let isCharging = source?.batteryIsCharging ?? systemMonitor.batteryIsCharging
+                    let icon = isCharging ? "⚡" : "🔋"
+                    let percent = source?.batteryPercentage ?? systemMonitor.batteryPercentage
+                    displayText += String(format: "%@%.0f%%", icon, percent)
                 } else {
                     displayText += "No Bat"
                 }
             case .disk:
-                let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
-                let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+                let read = source?.diskReadSpeed ?? systemMonitor.diskReadSpeed
+                let write = source?.diskWriteSpeed ?? systemMonitor.diskWriteSpeed
+                let readMB = read / (1024 * 1024)
+                let writeMB = write / (1024 * 1024)
                 displayText += String(format: "↓%.0f ↑%.0f", readMB, writeMB)
             }
         }
-        
+
         button.title = displayText
     }
     
