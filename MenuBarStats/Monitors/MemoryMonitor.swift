@@ -55,8 +55,15 @@ class MemoryMonitor: StatsProvider {
         let wired = Double(stats.wire_count) * pageSize
         let compressed = Double(stats.compressor_page_count) * pageSize
         let free = Double(stats.free_count) * pageSize
-        
-        let used = active + inactive + wired + compressed
+
+        // Map terminology: Activity Monitor shows 'App Memory' (apps' resident memory)
+        // which corresponds most closely to 'active' pages here. Expose an `app`
+        // alias for clarity. Use Activity Monitor's common grouping: combine
+        // `app` (active), `wired`, and `compressed` to report "used" memory.
+        // Exclude `inactive` to avoid double-counting cache-backed memory.
+        let app = active
+
+        let used = app + wired + compressed
         
         // Get total physical memory
         var size: UInt64 = 0
