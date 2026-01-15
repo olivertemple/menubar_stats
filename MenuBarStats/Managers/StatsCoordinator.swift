@@ -8,7 +8,8 @@ class StatsCoordinator: ObservableObject {
     @Published var isStale: Bool = false
     
     private let hostManager: HostManager
-    private let client = RemoteStatsClient()
+    private let agentClient = RemoteStatsClient()
+    private var truenasClients: [UUID: TrueNASAPIClient] = [:]
     private var cancellables = Set<AnyCancellable>()
     private var updateTimer: Timer?
     private var remoteSources: [UUID: RemoteLinuxStatsSource] = [:]
@@ -102,7 +103,16 @@ class StatsCoordinator: ObservableObject {
     
     private func fetchRemoteStats(for host: Host) async {
         do {
-            let stats = try await client.stats(host: host)
+            let stats: RemoteLinuxStats
+            
+            // Use appropriate client based on connection mode
+            if host.connectionMode == .truenasAPI {
+                let client = getTrueNASClient(for: host)
+                stats = try await client.fetchStats()
+            } else {
+                // Default to Go agent
+                stats = try await agentClient.stats(host: host)
+            }
             
             // Update the source
             if let source = remoteSources[host.id] {
@@ -134,6 +144,19 @@ class StatsCoordinator: ObservableObject {
                 isStale = true
             }
         }
+    }
+    
+    private func getTrueNASClient(for host: Host) -> TrueNASAPIClient {
+        if let existing = truenasClients[host.id] {
+            return existing
+        }
+        
+        let client = TrueNASAPIClient(
+            baseURL: host.baseURL ?? "",
+            apiKey: host.token
+        )
+        truenasClients[host.id] = client
+        return client
     }
     
     private func updateHostStatus(_ host: Host, status: Host.HostStatus, error: String?) {

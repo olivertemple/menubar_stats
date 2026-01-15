@@ -10,6 +10,7 @@ struct Host: Identifiable, Codable, Equatable {
     var baseURL: String?
     var token: String?
     var enabled: Bool
+    var connectionMode: ConnectionMode
     
     // Runtime status
     var status: HostStatus
@@ -28,6 +29,11 @@ struct Host: Identifiable, Codable, Equatable {
         case remote
     }
     
+    enum ConnectionMode: String, Codable {
+        case agent      // Connect to Go agent (default)
+        case truenasAPI // Connect to TrueNAS API
+    }
+    
     enum HostStatus: String, Codable {
         case online
         case offline
@@ -43,6 +49,7 @@ struct Host: Identifiable, Codable, Equatable {
             baseURL: nil,
             token: nil,
             enabled: true,
+            connectionMode: .agent, // Doesn't matter for local
             status: .online,
             lastSeen: Date(),
             lastUpdated: Date(),
@@ -59,7 +66,7 @@ struct Host: Identifiable, Codable, Equatable {
     }
     
     // Create a new remote host
-    static func createRemote(name: String, baseURL: String, token: String? = nil) -> Host {
+    static func createRemote(name: String, baseURL: String, token: String? = nil, connectionMode: ConnectionMode = .agent) -> Host {
         Host(
             id: UUID(),
             name: name,
@@ -67,6 +74,7 @@ struct Host: Identifiable, Codable, Equatable {
             baseURL: baseURL,
             token: token,
             enabled: true,
+            connectionMode: connectionMode,
             status: .unknown,
             lastSeen: nil,
             lastUpdated: nil,

@@ -140,16 +140,47 @@ struct TestConnectionView: View {
             return
         }
         
-        let client = RemoteStatsClient()
         let startTime = Date()
         
         do {
-            let result = try await client.testConnection(baseURL: host.baseURL ?? "", token: host.token)
-            latency = result.latency
-            healthInfo = result.health
-            success = true
+            if host.connectionMode == .truenasAPI {
+                // Test TrueNAS API connection
+                let client = TrueNASAPIClient(baseURL: host.baseURL ?? "", apiKey: host.token)
+                let systemInfo = try await client.testConnection()
+                latency = Date().timeIntervalSince(startTime)
+                healthInfo = HealthResponse(
+                    ok: true,
+                    schema: "v1",
+                    agentVersion: "TrueNAS-\(systemInfo.version)",
+                    hostname: systemInfo.hostname
+                )
+                success = true
+            } else {
+                // Test Go agent connection
+                let client = RemoteStatsClient()
+                let result = try await client.testConnection(baseURL: host.baseURL ?? "", token: host.token)
+                latency = result.latency
+                healthInfo = result.health
+                success = true
+            }
         } catch let error as RemoteStatsError {
             errorMessage = error.errorDescription
+            success = false
+        } catch let error as TrueNASAPIClient.TrueNASError {
+            switch error {
+            case .invalidURL:
+                errorMessage = "Invalid URL format"
+            case .networkError(let networkError):
+                errorMessage = "Network error: \(networkError.localizedDescription)"
+            case .authenticationFailed:
+                errorMessage = "Authentication failed. Check your API key."
+            case .invalidResponse:
+                errorMessage = "Invalid response from TrueNAS"
+            case .decodingError(let decodingError):
+                errorMessage = "Failed to parse response: \(decodingError.localizedDescription)"
+            case .unsupportedVersion:
+                errorMessage = "Unsupported TrueNAS version"
+            }
             success = false
         } catch {
             errorMessage = error.localizedDescription

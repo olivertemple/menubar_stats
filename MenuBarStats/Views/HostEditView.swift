@@ -23,6 +23,7 @@ struct HostEditView: View {
     @State private var baseURL: String = ""
     @State private var token: String = ""
     @State private var enabled: Bool = true
+    @State private var connectionMode: Host.ConnectionMode = .agent
     
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -36,6 +37,7 @@ struct HostEditView: View {
             _baseURL = State(initialValue: host.baseURL ?? "")
             _token = State(initialValue: host.token ?? "")
             _enabled = State(initialValue: host.enabled)
+            _connectionMode = State(initialValue: host.connectionMode)
         }
     }
     
@@ -67,9 +69,25 @@ struct HostEditView: View {
                     
                     TextField("Base URL", text: $baseURL)
                         .textFieldStyle(.roundedBorder)
-                        .help("Example: http://100.x.y.z:9955 or https://stats.domain.tld")
+                        .help(connectionMode == .agent ? 
+                              "Example: http://100.x.y.z:9955 or https://stats.domain.tld" :
+                              "Example: http://truenas.local or https://truenas.domain.tld")
                     
-                    Text("Example: http://100.x.y.z:9955 or https://stats.domain.tld")
+                    Text(connectionMode == .agent ?
+                         "Example: http://100.x.y.z:9955 (Go agent endpoint)" :
+                         "Example: http://truenas.local (TrueNAS web interface)")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(.secondary)
+                    
+                    Picker("Connection Type", selection: $connectionMode) {
+                        Text("Go Agent").tag(Host.ConnectionMode.agent)
+                        Text("TrueNAS API").tag(Host.ConnectionMode.truenasAPI)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Text(connectionMode == .agent ?
+                         "Connect to the lightweight Go agent running on the host" :
+                         "Connect directly to TrueNAS API (for VMs without host access)")
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(.secondary)
                 } header: {
@@ -79,10 +97,12 @@ struct HostEditView: View {
                 .padding(.bottom, 12)
                 
                 Section {
-                    SecureField("Token (optional)", text: $token)
+                    SecureField(connectionMode == .agent ? "Token (optional)" : "API Key (optional)", text: $token)
                         .textFieldStyle(.roundedBorder)
                     
-                    Text("Enter authentication token if required by the remote host")
+                    Text(connectionMode == .agent ?
+                         "Enter ****** token if required by the Go agent" :
+                         "Enter TrueNAS API key from Settings > API Keys")
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(.secondary)
                 } header: {
@@ -152,7 +172,8 @@ struct HostEditView: View {
             let newHost = Host.createRemote(
                 name: trimmedName,
                 baseURL: trimmedURL,
-                token: trimmedToken.isEmpty ? nil : trimmedToken
+                token: trimmedToken.isEmpty ? nil : trimmedToken,
+                connectionMode: connectionMode
             )
             var mutableHost = newHost
             mutableHost.enabled = enabled
@@ -164,6 +185,7 @@ struct HostEditView: View {
             updatedHost.baseURL = trimmedURL
             updatedHost.token = trimmedToken.isEmpty ? nil : trimmedToken
             updatedHost.enabled = enabled
+            updatedHost.connectionMode = connectionMode
             hostManager.updateHost(updatedHost)
         }
         
