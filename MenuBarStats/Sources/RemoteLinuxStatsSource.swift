@@ -236,6 +236,7 @@ class RemoteLinuxStatsSource: StatsSource {
     var batteryPercentage: Double { 0.0 }
     var batteryIsCharging: Bool { false }
     var batteryIsPluggedIn: Bool { false }
+    var batteryHealth: String { "N/A" }
     var batteryAvailable: Bool { false }
     var batteryHistory: [Double] { [] }
     
@@ -243,4 +244,17 @@ class RemoteLinuxStatsSource: StatsSource {
     var isAppleSilicon: Bool { false }
     var pCoreUsage: Double? { nil }
     var eCoreUsage: Double? { nil }
+    
+    // Linux-specific
+    var loadAvg1: Double? {
+        stats?.cpu?.loadavg1
+    }
+    
+    var loadAvg5: Double? {
+        stats?.cpu?.loadavg5
+    }
+    
+    var loadAvg15: Double? {
+        stats?.cpu?.loadavg15
+    }
 }

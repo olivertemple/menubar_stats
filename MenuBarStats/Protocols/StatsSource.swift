@@ -56,6 +56,7 @@ protocol StatsSource {
     var batteryPercentage: Double { get }
     var batteryIsCharging: Bool { get }
     var batteryIsPluggedIn: Bool { get }
+    var batteryHealth: String { get }
     var batteryAvailable: Bool { get }
     var batteryHistory: [Double] { get }
     
@@ -63,4 +64,9 @@ protocol StatsSource {
     var isAppleSilicon: Bool { get }
     var pCoreUsage: Double? { get }
     var eCoreUsage: Double? { get }
+    
+    // Linux-specific (optional)
+    var loadAvg1: Double? { get }
+    var loadAvg5: Double? { get }
+    var loadAvg15: Double? { get }
 }

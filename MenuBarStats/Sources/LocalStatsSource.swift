@@ -58,6 +58,7 @@ class LocalStatsSource: StatsSource {
     var batteryPercentage: Double { monitor.batteryPercentage }
     var batteryIsCharging: Bool { monitor.batteryIsCharging }
     var batteryIsPluggedIn: Bool { monitor.batteryIsPluggedIn }
+    var batteryHealth: String { monitor.batteryHealth }
     var batteryAvailable: Bool { monitor.batteryAvailable }
     var batteryHistory: [Double] { monitor.batteryHistory }
     
@@ -65,4 +66,9 @@ class LocalStatsSource: StatsSource {
     var isAppleSilicon: Bool { monitor.isAppleSilicon }
     var pCoreUsage: Double? { monitor.pCoreUsage }
     var eCoreUsage: Double? { monitor.eCoreUsage }
+    
+    // Linux-specific (not available on local Mac)
+    var loadAvg1: Double? { nil }
+    var loadAvg5: Double? { nil }
+    var loadAvg15: Double? { nil }
 }
