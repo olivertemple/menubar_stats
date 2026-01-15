@@ -123,12 +123,19 @@ class StatsCoordinator: ObservableObject {
             // the previous source so sparklines are preserved.
             let previous = remoteSources[host.id]
             let newSource = RemoteLinuxStatsSource(hostName: host.name, stats: stats, previous: previous)
+            // Always update the cached source for this host so switching back is fast
             remoteSources[host.id] = newSource
-            await MainActor.run {
-                // Assign the new source so views observe the change immediately
-                self.currentSource = nil
-                self.currentSource = newSource
-                isStale = false
+
+            // Only update the observable `currentSource` if the user is still
+            // viewing this host. This prevents a previously-started fetch for a
+            // different host from clobbering the UI when it completes later.
+            if host.id == hostManager.selectedHostId {
+                await MainActor.run {
+                    // Assign the new source so views observe the change immediately
+                    self.currentSource = nil
+                    self.currentSource = newSource
+                    isStale = false
+                }
             }
             // Log the exact values that were applied to the UI source
             if let source = remoteSources[host.id] {
