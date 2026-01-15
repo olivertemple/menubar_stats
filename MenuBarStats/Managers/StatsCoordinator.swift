@@ -82,7 +82,8 @@ class StatsCoordinator: ObservableObject {
     
     private func performUpdate() {
         guard let currentHost = hostManager.hosts.first(where: { $0.id == hostManager.selectedHostId }),
-              currentHost.type == .remote else {
+              currentHost.type == .remote,
+              currentHost.enabled else {
             return
         }
         
@@ -92,11 +93,6 @@ class StatsCoordinator: ObservableObject {
     }
     
     private func fetchRemoteStats(for host: Host) async {
-        guard host.enabled else {
-            updateHostStatus(host, status: .unknown, error: "Host disabled")
-            return
-        }
-        
         do {
             let stats = try await client.stats(host: host)
             

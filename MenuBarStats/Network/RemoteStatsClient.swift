@@ -22,6 +22,7 @@ enum RemoteStatsError: Error, LocalizedError {
     case decodingError(Error)
     case timeout
     case unauthorized
+    case backoff
     
     var errorDescription: String? {
         switch self {
@@ -42,6 +43,8 @@ enum RemoteStatsError: Error, LocalizedError {
             return "Request timeout"
         case .unauthorized:
             return "Unauthorized - check token"
+        case .backoff:
+            return "Backing off due to previous failures"
         }
     }
 }
@@ -87,7 +90,7 @@ class RemoteStatsClient {
         
         // Check backoff
         if let state = backoffState[host.id], state.shouldBackoff {
-            throw RemoteStatsError.timeout
+            throw RemoteStatsError.backoff
         }
         
         let url = "\(baseURL)/v1/stats"

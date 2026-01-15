@@ -12,7 +12,6 @@ class RemoteLinuxStatsSource: StatsSource {
     private var diskWriteHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var temperatureHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var gpuHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
-    private var batteryHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var networkUploadHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var networkDownloadHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     
@@ -204,7 +203,8 @@ class RemoteLinuxStatsSource: StatsSource {
     
     // Temperature
     var cpuTemperature: Double {
-        stats?.averageTemperature ?? 0.0
+        guard thermalAvailable, let temp = stats?.averageTemperature else { return 0.0 }
+        return temp
     }
     
     var gpuTemperature: Double {
