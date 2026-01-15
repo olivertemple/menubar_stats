@@ -2,7 +2,9 @@ import Foundation
 import Combine
 
 class StatsCoordinator: ObservableObject {
-    @Published var currentSource: StatsSource
+    static let shared = StatsCoordinator()
+    
+    @Published var currentSource: (any StatsSource)?
     @Published var isStale: Bool = false
     
     private let hostManager: HostManager
@@ -12,10 +14,16 @@ class StatsCoordinator: ObservableObject {
     private var remoteSources: [UUID: RemoteLinuxStatsSource] = [:]
     
     private let updateInterval: TimeInterval = 1.0
+    private var isStarted = false
     
-    init(hostManager: HostManager) {
+    init(hostManager: HostManager = HostManager.shared) {
         self.hostManager = hostManager
         self.currentSource = LocalStatsSource()
+    }
+    
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
         
         setupBindings()
         startUpdateTimer()

@@ -6,6 +6,7 @@ struct MenuBarStatsApp: App {
     @StateObject private var systemMonitor = SystemMonitor()
     @StateObject private var settings = UserSettings()
     @StateObject private var hostManager = HostManager()
+    @StateObject private var statsCoordinator = StatsCoordinator()
     
     var body: some Scene {
         Settings {
@@ -21,6 +22,7 @@ struct MenuBarStatsApp: App {
         _systemMonitor = StateObject(wrappedValue: SystemMonitor.shared)
         _settings = StateObject(wrappedValue: UserSettings.shared)
         _hostManager = StateObject(wrappedValue: HostManager.shared)
+        _statsCoordinator = StateObject(wrappedValue: StatsCoordinator.shared)
     }
 }
 
@@ -44,6 +46,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         HostManager.shared
     }
     
+    private var statsCoordinator: StatsCoordinator {
+        StatsCoordinator.shared
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -56,6 +62,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         
         // Start monitoring with user's configured interval
         systemMonitor.startMonitoring(interval: settings.refreshInterval)
+        
+        // Start stats coordinator for remote host monitoring
+        statsCoordinator.start()
         
         // Update menu bar with user's configured interval
         startMenuBarUpdateTimer()
@@ -76,15 +85,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             object: nil
         )
         
-        // Create popover
+        // Create popover with UnifiedStatsView
         let popover = NSPopover()
         popover.contentSize = NSSize(width: 420, height: 600)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
-            rootView: MenuBarView()
+            rootView: UnifiedStatsView()
                 .environmentObject(systemMonitor)
                 .environmentObject(settings)
                 .environmentObject(hostManager)
+                .environmentObject(statsCoordinator)
         )
         popover.delegate = self
         self.popover = popover
