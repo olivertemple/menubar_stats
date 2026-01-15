@@ -3,23 +3,31 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var systemMonitor: SystemMonitor
     @EnvironmentObject var settings: UserSettings
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
+            HStack(spacing: 12) {
                 Text("System Stats")
                     .font(.headline)
-                    .padding()
+                    .fontWeight(.semibold)
                 Spacer()
                 Button(action: {
-                    NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                    openSettings()
                 }) {
                     Image(systemName: "gear")
+                        .font(.system(size: 16))
+                        .foregroundColor(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Color.secondary.opacity(0.1))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .padding()
+                .help("Settings")
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .background(Color(NSColor.controlBackgroundColor))
             
             Divider()
@@ -82,9 +90,13 @@ struct MenuBarView: View {
                                 if systemMonitor.cpuTemperature > 0 {
                                     StatRow(label: "CPU", value: String(format: "%.1f°C", systemMonitor.cpuTemperature))
                                 } else {
-                                    Text("Temperature monitoring requires additional permissions")
-                                        .font(.caption)
+                                    Text("Temperature monitoring requires SMC access")
+                                        .font(.system(size: 12))
                                         .foregroundColor(.secondary)
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 8)
+                                        .background(Color.orange.opacity(0.1))
+                                        .cornerRadius(6)
                                 }
                                 if systemMonitor.gpuTemperature > 0 {
                                     StatRow(label: "GPU", value: String(format: "%.1f°C", systemMonitor.gpuTemperature))
@@ -98,17 +110,18 @@ struct MenuBarView: View {
                         StatSection(title: "Open Ports", icon: "network.badge.shield.half.filled") {
                             if systemMonitor.openPorts.isEmpty {
                                 Text("No listening ports found")
-                                    .font(.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(.secondary)
+                                    .italic()
                             } else {
                                 ForEach(systemMonitor.openPorts) { portInfo in
                                     HStack {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Port \(portInfo.port)")
-                                                .font(.caption)
-                                                .fontWeight(.medium)
+                                                .font(.system(size: 13, weight: .medium))
+                                                .foregroundColor(.primary)
                                             Text("\(portInfo.processName) (PID: \(portInfo.pid))")
-                                                .font(.caption2)
+                                                .font(.system(size: 12))
                                                 .foregroundColor(.secondary)
                                         }
                                         Spacer()
@@ -116,35 +129,79 @@ struct MenuBarView: View {
                                             killPort(portInfo)
                                         }) {
                                             Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 16))
                                                 .foregroundColor(.red)
                                         }
                                         .buttonStyle(.plain)
                                         .help("Kill process")
                                     }
-                                    .padding(.vertical, 2)
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .background(Color.secondary.opacity(0.05))
+                                    .cornerRadius(6)
                                 }
                             }
                         }
                     }
                 }
-                .padding()
+                .padding(16)
             }
             
             Divider()
             
             // Footer
-            HStack {
-                Button("Quit") {
-                    NSApplication.shared.terminate(nil)
+            HStack(spacing: 12) {
+                Button(action: {
+                    openSettings()
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 14))
+                        Text("Settings")
+                            .font(.system(size: 14))
+                    }
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(.red)
-                .padding()
                 
                 Spacer()
+                
+                Button(action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "power")
+                            .font(.system(size: 14))
+                        Text("Quit")
+                            .font(.system(size: 14))
+                    }
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 400, height: 600)
+        .frame(width: 420, height: 600)
+    }
+    
+    private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        
+        // Close popover first
+        if let window = NSApp.windows.first(where: { $0.isVisible && $0.level == .popUpMenu }) {
+            window.close()
+        }
+        
+        // Open settings window
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
     }
     
     private func killPort(_ portInfo: PortInfo) {
@@ -189,18 +246,22 @@ struct StatSection<Content: View>: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
                 Image(systemName: icon)
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.accentColor)
+                    .frame(width: 20)
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.primary)
             }
             
             content
-                .padding(.leading, 24)
+                .padding(.leading, 28)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
     }
 }
 
@@ -209,15 +270,17 @@ struct StatRow: View {
     let value: String
     
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Text(label)
-                .font(.caption)
+                .font(.system(size: 13))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(.caption)
-                .fontWeight(.medium)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+                .monospacedDigit()
         }
+        .padding(.vertical, 2)
     }
 }
 

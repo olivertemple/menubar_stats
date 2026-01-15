@@ -51,9 +51,11 @@ class NetworkMonitor {
             
             if let addr = interface.ifa_addr,
                addr.pointee.sa_family == UInt8(AF_LINK) {
-                let data = unsafeBitCast(addr, to: UnsafeMutablePointer<if_data>.self)
-                currentUploadBytes += UInt64(data.pointee.ifi_obytes)
-                currentDownloadBytes += UInt64(data.pointee.ifi_ibytes)
+                // Safely access if_data through ifa_data pointer
+                if let ifData = interface.ifa_data?.assumingMemoryBound(to: if_data.self) {
+                    currentUploadBytes += UInt64(ifData.pointee.ifi_obytes)
+                    currentDownloadBytes += UInt64(ifData.pointee.ifi_ibytes)
+                }
             }
         }
         

@@ -13,19 +13,29 @@ struct MenuBarStatsApp: App {
                 .environmentObject(systemMonitor)
         }
     }
+    
+    init() {
+        // Share instances with AppDelegate
+        _systemMonitor = StateObject(wrappedValue: SystemMonitor.shared)
+        _settings = StateObject(wrappedValue: UserSettings.shared)
+    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
-    var systemMonitor: SystemMonitor?
-    var settings: UserSettings?
+    private var menuBarUpdateTimer: Timer?
+    
+    // Use shared instances
+    private var systemMonitor: SystemMonitor {
+        SystemMonitor.shared
+    }
+    
+    private var settings: UserSettings {
+        UserSettings.shared
+    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Create system monitor and settings
-        systemMonitor = SystemMonitor()
-        settings = UserSettings()
-        
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
@@ -35,24 +45,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
         }
         
-        // Start monitoring
-        systemMonitor?.startMonitoring()
+        // Start monitoring with user's configured interval
+        systemMonitor.startMonitoring(interval: settings.refreshInterval)
         
-        // Update menu bar every second
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateMenuBarDisplay()
-        }
+        // Update menu bar with user's configured interval
+        startMenuBarUpdateTimer()
+        
+        // Listen for refresh interval changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshIntervalDidChange(_:)),
+            name: .refreshIntervalChanged,
+            object: nil
+        )
         
         // Create popover
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 400, height: 600)
+        popover.contentSize = NSSize(width: 420, height: 600)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
             rootView: MenuBarView()
-                .environmentObject(systemMonitor!)
-                .environmentObject(settings!)
+                .environmentObject(systemMonitor)
+                .environmentObject(settings)
         )
         self.popover = popover
+    }
+    
+    @objc private func refreshIntervalDidChange(_ notification: Notification) {
+        startMenuBarUpdateTimer()
+    }
+    
+    private func startMenuBarUpdateTimer() {
+        menuBarUpdateTimer?.invalidate()
+        menuBarUpdateTimer = Timer.scheduledTimer(withTimeInterval: settings.refreshInterval, repeats: true) { [weak self] _ in
+            self?.updateMenuBarDisplay()
+        }
     }
     
     @objc func togglePopover() {
@@ -67,23 +94,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @objc func openSettings() {
+        // Activate the app and open settings window
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+    
     func updateMenuBarDisplay() {
-        guard let button = statusItem?.button,
-              let monitor = systemMonitor,
-              let settings = settings else { return }
+        guard let button = statusItem?.button else { return }
         
         var displayText = ""
         
         // Show primary stat
         switch settings.menuBarPrimaryStat {
         case .cpu:
-            displayText += String(format: "CPU: %.0f%%", monitor.cpuUsage)
+            displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
         case .memory:
-            displayText += String(format: "RAM: %.0f%%", monitor.memoryUsage)
+            displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
         case .network:
-            displayText += formatBytes(monitor.networkUploadSpeed) + "↑"
+            displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
         case .storage:
-            displayText += String(format: "Disk: %.0f%%", monitor.storageUsage)
+            displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
         }
         
         // Show secondary stat if enabled
@@ -91,13 +122,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             displayText += " | "
             switch settings.menuBarSecondaryStat {
             case .cpu:
-                displayText += String(format: "CPU: %.0f%%", monitor.cpuUsage)
+                displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
             case .memory:
-                displayText += String(format: "RAM: %.0f%%", monitor.memoryUsage)
+                displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
             case .network:
-                displayText += formatBytes(monitor.networkDownloadSpeed) + "↓"
+                displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
             case .storage:
-                displayText += String(format: "Disk: %.0f%%", monitor.storageUsage)
+                displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
             }
         }
         

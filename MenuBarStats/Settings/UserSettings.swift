@@ -9,6 +9,8 @@ enum StatType: String, CaseIterable, Codable {
 }
 
 class UserSettings: ObservableObject {
+    static let shared = UserSettings()
+    
     @AppStorage("menuBarPrimaryStat") var menuBarPrimaryStat: StatType = .cpu
     @AppStorage("menuBarSecondaryStat") var menuBarSecondaryStat: StatType = .memory
     @AppStorage("showSecondaryStatInMenuBar") var showSecondaryStatInMenuBar: Bool = true
@@ -23,10 +25,21 @@ class UserSettings: ObservableObject {
             setLaunchAtLogin(launchAtLogin)
         }
     }
-    @AppStorage("refreshInterval") var refreshInterval: Double = 1.0
+    @AppStorage("refreshInterval") var refreshInterval: Double = 1.0 {
+        didSet {
+            SystemMonitor.shared.updateInterval(refreshInterval)
+            NotificationCenter.default.post(name: .refreshIntervalChanged, object: refreshInterval)
+        }
+    }
+    
+    private init() {}
     
     private func setLaunchAtLogin(_ enabled: Bool) {
         // This would require adding a login item
         // For now, we'll provide instructions in the settings UI
     }
+}
+
+extension Notification.Name {
+    static let refreshIntervalChanged = Notification.Name("refreshIntervalChanged")
 }

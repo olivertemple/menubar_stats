@@ -2,6 +2,8 @@ import Foundation
 import Combine
 
 class SystemMonitor: ObservableObject {
+    static let shared = SystemMonitor()
+    
     @Published var cpuUsage: Double = 0.0
     @Published var memoryUsage: Double = 0.0
     @Published var memoryUsed: Double = 0.0
@@ -27,12 +29,17 @@ class SystemMonitor: ObservableObject {
     
     private var timer: Timer?
     
-    func startMonitoring() {
+    private init() {}
+    
+    func startMonitoring(interval: TimeInterval = 1.0) {
+        // Stop any existing timer
+        stopMonitoring()
+        
         // Update immediately
         updateStats()
         
-        // Update every second
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // Update at specified interval
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.updateStats()
         }
     }
@@ -40,6 +47,10 @@ class SystemMonitor: ObservableObject {
     func stopMonitoring() {
         timer?.invalidate()
         timer = nil
+    }
+    
+    func updateInterval(_ interval: TimeInterval) {
+        startMonitoring(interval: interval)
     }
     
     private func updateStats() {
@@ -72,8 +83,10 @@ class SystemMonitor: ObservableObject {
         cpuTemperature = tempStats.cpu
         gpuTemperature = tempStats.gpu
         
-        // Ports
-        openPorts = portMonitor.getOpenPorts()
+        // Ports (update less frequently to reduce overhead)
+        if Int(Date().timeIntervalSince1970) % 5 == 0 {
+            openPorts = portMonitor.getOpenPorts()
+        }
     }
     
     deinit {
