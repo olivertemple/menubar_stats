@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var systemMonitor: SystemMonitor
     @EnvironmentObject var settings: UserSettings
+    @EnvironmentObject var hostManager: HostManager
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -19,6 +20,12 @@ struct MenuBarView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
+                
+                // Host Selector
+                HostSelectorView()
+                    .environmentObject(hostManager)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {

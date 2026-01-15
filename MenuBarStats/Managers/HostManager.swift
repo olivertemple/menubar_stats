@@ -2,6 +2,8 @@ import Foundation
 import Combine
 
 class HostManager: ObservableObject {
+    static let shared = HostManager()
+    
     @Published var hosts: [Host] = []
     @Published var selectedHostId: UUID
     

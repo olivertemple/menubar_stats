@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settings: UserSettings
+    @EnvironmentObject var hostManager: HostManager
     
     var body: some View {
         TabView {
@@ -21,6 +22,12 @@ struct SettingsView: View {
                 .environmentObject(settings)
                 .tabItem {
                     Label("Detail View", systemImage: "list.bullet")
+                }
+            
+            HostManagementView()
+                .environmentObject(hostManager)
+                .tabItem {
+                    Label("Hosts", systemImage: "server.rack")
                 }
         }
         .frame(width: 550, height: 450)

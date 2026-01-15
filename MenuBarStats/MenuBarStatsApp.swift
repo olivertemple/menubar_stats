@@ -5,12 +5,14 @@ struct MenuBarStatsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var systemMonitor = SystemMonitor()
     @StateObject private var settings = UserSettings()
+    @StateObject private var hostManager = HostManager()
     
     var body: some Scene {
         Settings {
             SettingsView()
                 .environmentObject(settings)
                 .environmentObject(systemMonitor)
+                .environmentObject(hostManager)
         }
     }
     
@@ -18,6 +20,7 @@ struct MenuBarStatsApp: App {
         // Share instances with AppDelegate
         _systemMonitor = StateObject(wrappedValue: SystemMonitor.shared)
         _settings = StateObject(wrappedValue: UserSettings.shared)
+        _hostManager = StateObject(wrappedValue: HostManager.shared)
     }
 }
 
@@ -35,6 +38,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     
     private var settings: UserSettings {
         UserSettings.shared
+    }
+    
+    private var hostManager: HostManager {
+        HostManager.shared
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -77,6 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             rootView: MenuBarView()
                 .environmentObject(systemMonitor)
                 .environmentObject(settings)
+                .environmentObject(hostManager)
         )
         popover.delegate = self
         self.popover = popover

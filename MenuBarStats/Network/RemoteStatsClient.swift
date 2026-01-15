@@ -105,6 +105,60 @@ class RemoteStatsClient {
         }
     }
     
+    func testConnection(baseURL: String, token: String?) async throws -> (health: HealthResponse, latency: TimeInterval) {
+        let startTime = Date()
+        
+        // Test health endpoint
+        let healthURL = "\(baseURL)/v1/health"
+        guard let requestURL = URL(string: healthURL) else {
+            throw RemoteStatsError.invalidURL
+        }
+        
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.timeoutInterval = timeout
+        
+        if let token = token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let data: Data
+        let response: URLResponse
+        
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let error as NSError {
+            if error.code == NSURLErrorTimedOut {
+                throw RemoteStatsError.timeout
+            }
+            throw RemoteStatsError.networkError(error)
+        }
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw RemoteStatsError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 401 {
+            throw RemoteStatsError.unauthorized
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8)
+            throw RemoteStatsError.httpError(httpResponse.statusCode, errorMessage)
+        }
+        
+        let health: HealthResponse
+        do {
+            let decoder = JSONDecoder()
+            health = try decoder.decode(HealthResponse.self, from: data)
+        } catch {
+            throw RemoteStatsError.decodingError(error)
+        }
+        
+        let latency = Date().timeIntervalSince(startTime)
+        return (health, latency)
+    }
+    
     private func fetch<T: Decodable>(url: String, token: String?, hostId: UUID) async throws -> T {
         guard let requestURL = URL(string: url) else {
             throw RemoteStatsError.invalidURL
