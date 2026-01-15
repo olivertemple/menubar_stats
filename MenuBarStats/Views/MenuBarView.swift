@@ -16,8 +16,8 @@ struct MenuBarView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
-            .cornerRadius(8)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(NSColor.separatorColor).opacity(0.08)))
             .padding(.horizontal, 6)
             
             Divider()
@@ -423,19 +423,21 @@ struct MenuBarView: View {
             // Footer
             HStack(spacing: 12) {
                 SettingsLink {
-                    HStack(spacing: 6) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 14))
-                        Text("Settings")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(.accentColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                        HStack(spacing: 6) {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 14))
+                            Text("Settings")
+                                .font(.system(size: 14))
+                        }
+                        .foregroundColor(.accentColor)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.regularMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Color(NSColor.separatorColor).opacity(0.08)))
+                        .contentShape(Capsule())
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(NoHighlightButtonStyle())
                 .controlSize(.small)
-                .tint(.accentColor)
                 
                 Spacer()
                 
@@ -451,19 +453,22 @@ struct MenuBarView: View {
                     .foregroundColor(.red)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
+                    .background(.regularMaterial, in: Capsule())
+                    .overlay(Capsule().stroke(Color(NSColor.separatorColor).opacity(0.08)))
+                    .contentShape(Capsule())
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
                 .controlSize(.small)
-                .tint(.red)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .frame(width: 420, height: 600)
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color(NSColor.windowBackgroundColor)))
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color(NSColor.separatorColor).opacity(0.08)))
+        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
     }
     
     
@@ -613,7 +618,7 @@ struct StatSection<Content: View>: View {
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 8)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.02))
+        .background(Color(NSColor.separatorColor).opacity(0.02))
         .cornerRadius(6)
     }
 }
@@ -642,5 +647,14 @@ struct MenuBarView_Previews: PreviewProvider {
         MenuBarView()
             .environmentObject(SystemMonitor())
             .environmentObject(UserSettings())
+    }
+}
+
+// Custom button style that avoids changing colors/opacity on press.
+struct NoHighlightButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
