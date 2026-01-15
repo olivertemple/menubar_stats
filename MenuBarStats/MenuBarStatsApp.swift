@@ -85,12 +85,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             object: nil
         )
         
-        // Create popover with UnifiedStatsView
+        // Create popover
         let popover = NSPopover()
         popover.contentSize = NSSize(width: 420, height: 600)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
-            rootView: UnifiedStatsView()
+            rootView: MenuBarView()
                 .environmentObject(systemMonitor)
                 .environmentObject(settings)
                 .environmentObject(hostManager)
