@@ -43,7 +43,39 @@ struct MenuBarView: View {
                             }
                         }
                     
-                    // Memory Section
+                    // GPU Section
+                    if settings.showGPUInDetail {
+                        StatSection(title: "GPU", icon: "videoprojector", isCollapsed: !settings.gpuSectionExpanded, summary: gpuSummary(), toggleAction: { settings.gpuSectionExpanded.toggle() }) {
+                            if settings.gpuSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if systemMonitor.gpuAvailable {
+                                        StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.gpuUsage))
+                                        
+                                        // GPU usage sparkline
+                                        if !systemMonitor.gpuHistory.isEmpty {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text("Usage History")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.secondary)
+                                                SparklineView(values: systemMonitor.gpuHistory, minValue: 0, maxValue: 100, lineColor: .purple)
+                                                    .frame(height: 30)
+                                            }
+                                            .padding(.top, 4)
+                                        }
+                                    } else {
+                                        Text("GPU monitoring not available")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                            .italic()
+                                    }
+                                }
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    // Memory Section (Enhanced)
                     if settings.showMemoryInDetail {
                         StatSection(title: "Memory", icon: "memorychip", isCollapsed: !settings.memorySectionExpanded, summary: memorySummary(), toggleAction: { settings.memorySectionExpanded.toggle() }) {
                             if settings.memorySectionExpanded {
@@ -51,6 +83,37 @@ struct MenuBarView: View {
                                     StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.memoryUsage))
                                     StatRow(label: "Used", value: formatBytes(systemMonitor.memoryUsed))
                                     StatRow(label: "Total", value: formatBytes(systemMonitor.memoryTotal))
+                                    StatRow(label: "Wired", value: formatBytes(systemMonitor.memoryWired))
+                                    StatRow(label: "Active", value: formatBytes(systemMonitor.memoryActive))
+                                    StatRow(label: "Compressed", value: formatBytes(systemMonitor.memoryCompressed))
+                                    if systemMonitor.memorySwapUsed > 0 {
+                                        StatRow(label: "Swap Used", value: formatBytes(systemMonitor.memorySwapUsed))
+                                    }
+                                    StatRow(label: "Pressure", value: String(format: "%.1f%%", systemMonitor.memoryPressure))
+                                    
+                                    // Memory usage sparkline
+                                    if !systemMonitor.memoryHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Usage History")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.memoryHistory, minValue: 0, maxValue: 100, lineColor: .blue)
+                                                .frame(height: 30)
+                                        }
+                                        .padding(.top, 4)
+                                    }
+                                    
+                                    // Memory pressure sparkline
+                                    if !systemMonitor.memoryPressureHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Pressure History")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.memoryPressureHistory, minValue: 0, maxValue: 100, lineColor: .orange)
+                                                .frame(height: 30)
+                                        }
+                                        .padding(.top, 4)
+                                    }
                                 }
                             } else {
                                 EmptyView()
@@ -89,7 +152,117 @@ struct MenuBarView: View {
                         }
                     }
                     
-                    // Temperature Section
+                    // Battery Section
+                    if settings.showBatteryInDetail {
+                        StatSection(title: "Battery", icon: "battery.100", isCollapsed: !settings.batterySectionExpanded, summary: batterySummary(), toggleAction: { settings.batterySectionExpanded.toggle() }) {
+                            if settings.batterySectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if systemMonitor.batteryAvailable {
+                                        StatRow(label: "Percentage", value: String(format: "%.0f%%", systemMonitor.batteryPercentage))
+                                        StatRow(label: "Status", value: systemMonitor.batteryIsCharging ? "Charging" : (systemMonitor.batteryIsPluggedIn ? "Plugged In" : "On Battery"))
+                                        if let timeRemaining = systemMonitor.batteryTimeRemaining {
+                                            let hours = timeRemaining / 60
+                                            let minutes = timeRemaining % 60
+                                            StatRow(label: "Time Remaining", value: String(format: "%dh %dm", hours, minutes))
+                                        }
+                                        if systemMonitor.batteryPowerDraw > 0 {
+                                            StatRow(label: "Power Draw", value: String(format: "%.1fW", systemMonitor.batteryPowerDraw))
+                                        }
+                                        if let chargingWattage = systemMonitor.batteryChargingWattage {
+                                            StatRow(label: "Charging Power", value: String(format: "%.1fW", chargingWattage))
+                                        }
+                                        StatRow(label: "Cycle Count", value: "\(systemMonitor.batteryCycleCount)")
+                                        StatRow(label: "Max Capacity", value: String(format: "%.0f%%", systemMonitor.batteryMaxCapacity))
+                                        StatRow(label: "Health", value: systemMonitor.batteryHealth)
+                                        
+                                        // Battery percentage sparkline
+                                        if !systemMonitor.batteryHistory.isEmpty {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text("Percentage History")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.secondary)
+                                                SparklineView(values: systemMonitor.batteryHistory, minValue: 0, maxValue: 100, lineColor: .green)
+                                                    .frame(height: 30)
+                                            }
+                                            .padding(.top, 4)
+                                        }
+                                    } else {
+                                        Text("Battery not available")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                            .italic()
+                                    }
+                                }
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    // Disk Activity Section
+                    if settings.showDiskActivityInDetail {
+                        StatSection(title: "Disk Activity", icon: "speedometer", isCollapsed: !settings.diskActivitySectionExpanded, summary: diskActivitySummary(), toggleAction: { settings.diskActivitySectionExpanded.toggle() }) {
+                            if settings.diskActivitySectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    StatRow(label: "Read Speed", value: "\(formatBytes(systemMonitor.diskReadSpeed))/s")
+                                    StatRow(label: "Write Speed", value: "\(formatBytes(systemMonitor.diskWriteSpeed))/s")
+                                    
+                                    // Disk read sparkline
+                                    if !systemMonitor.diskReadHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Read Speed (MB/s)")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.diskReadHistory, minValue: 0, lineColor: .cyan)
+                                                .frame(height: 30)
+                                        }
+                                        .padding(.top, 4)
+                                    }
+                                    
+                                    // Disk write sparkline
+                                    if !systemMonitor.diskWriteHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Write Speed (MB/s)")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.diskWriteHistory, minValue: 0, lineColor: .orange)
+                                                .frame(height: 30)
+                                        }
+                                        .padding(.top, 4)
+                                    }
+                                }
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    // Disk Health Section
+                    if settings.showDiskHealthInDetail {
+                        StatSection(title: "Disk Health", icon: "checkmark.shield", isCollapsed: !settings.diskHealthSectionExpanded, summary: diskHealthSummary(), toggleAction: { settings.diskHealthSectionExpanded.toggle() }) {
+                            if settings.diskHealthSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if systemMonitor.diskHealthAvailable {
+                                        StatRow(label: "Status", value: systemMonitor.diskHealthStatus)
+                                        if let wearLevel = systemMonitor.diskWearLevel {
+                                            StatRow(label: "Wear Level", value: String(format: "%.1f%%", wearLevel))
+                                        }
+                                        StatRow(label: "Free Space", value: formatBytes(systemMonitor.diskFreeSpace))
+                                        StatRow(label: "Total Space", value: formatBytes(systemMonitor.diskTotalSpace))
+                                    } else {
+                                        Text("Disk health info not available")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                            .italic()
+                                    }
+                                }
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    // Temperature Section (Enhanced)
                     if settings.showTemperatureInDetail {
                         StatSection(title: "Temperature", icon: "thermometer", isCollapsed: !settings.temperatureSectionExpanded, summary: temperatureSummary(), toggleAction: { settings.temperatureSectionExpanded.toggle() }) {
                             if settings.temperatureSectionExpanded {
@@ -107,6 +280,57 @@ struct MenuBarView: View {
                                     }
                                     if systemMonitor.gpuTemperature > 0 {
                                         StatRow(label: "GPU", value: String(format: "%.1f°C", systemMonitor.gpuTemperature))
+                                    }
+                                    if let socTemp = systemMonitor.socTemperature, socTemp > 0 {
+                                        StatRow(label: "SoC", value: String(format: "%.1f°C", socTemp))
+                                    }
+                                    if let fanSpeed = systemMonitor.fanSpeed, fanSpeed > 0 {
+                                        StatRow(label: "Fan Speed", value: "\(fanSpeed) RPM")
+                                    }
+                                    if systemMonitor.isThrottling {
+                                        Text("⚠️ Thermal Throttling Active")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.orange)
+                                            .padding(.vertical, 4)
+                                    }
+                                    
+                                    // Temperature sparkline
+                                    if !systemMonitor.temperatureHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Temperature History")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.temperatureHistory, minValue: 0, maxValue: 100, lineColor: .red)
+                                                .frame(height: 30)
+                                        }
+                                        .padding(.top, 4)
+                                    }
+                                }
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    // Apple Silicon Section
+                    if settings.showAppleSiliconInDetail && systemMonitor.isAppleSilicon {
+                        StatSection(title: "Apple Silicon", icon: "cpu.fill", isCollapsed: !settings.appleSiliconSectionExpanded, summary: appleSiliconSummary(), toggleAction: { settings.appleSiliconSectionExpanded.toggle() }) {
+                            if settings.appleSiliconSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if let pCoreUsage = systemMonitor.pCoreUsage {
+                                        StatRow(label: "P-Core Usage", value: String(format: "%.1f%%", pCoreUsage))
+                                    }
+                                    if let eCoreUsage = systemMonitor.eCoreUsage {
+                                        StatRow(label: "E-Core Usage", value: String(format: "%.1f%%", eCoreUsage))
+                                    }
+                                    if let memBandwidth = systemMonitor.memoryBandwidth {
+                                        StatRow(label: "Memory Bandwidth", value: String(format: "%.1f GB/s", memBandwidth))
+                                    }
+                                    if let neUsage = systemMonitor.neuralEngineUsage {
+                                        StatRow(label: "Neural Engine", value: String(format: "%.1f%%", neUsage))
+                                    }
+                                    if let meUsage = systemMonitor.mediaEngineUsage {
+                                        StatRow(label: "Media Engine", value: String(format: "%.1f%%", meUsage))
                                     }
                                 }
                             } else {
@@ -266,6 +490,40 @@ struct MenuBarView: View {
 
     private func portsSummary() -> String {
         return "\(systemMonitor.openPorts.count)"
+    }
+    
+    private func gpuSummary() -> String {
+        if systemMonitor.gpuAvailable {
+            return String(format: "%.0f%%", systemMonitor.gpuUsage)
+        }
+        return "—"
+    }
+    
+    private func batterySummary() -> String {
+        if systemMonitor.batteryAvailable {
+            return String(format: "%.0f%%", systemMonitor.batteryPercentage)
+        }
+        return "—"
+    }
+    
+    private func diskActivitySummary() -> String {
+        return "R: \(formatBytes(systemMonitor.diskReadSpeed))/s • W: \(formatBytes(systemMonitor.diskWriteSpeed))/s"
+    }
+    
+    private func diskHealthSummary() -> String {
+        if systemMonitor.diskHealthAvailable {
+            return systemMonitor.diskHealthStatus
+        }
+        return "—"
+    }
+    
+    private func appleSiliconSummary() -> String {
+        if let pCore = systemMonitor.pCoreUsage, let eCore = systemMonitor.eCoreUsage {
+            return String(format: "P: %.0f%% • E: %.0f%%", pCore, eCore)
+        } else if let pCore = systemMonitor.pCoreUsage {
+            return String(format: "P: %.0f%%", pCore)
+        }
+        return "—"
     }
 }
 
