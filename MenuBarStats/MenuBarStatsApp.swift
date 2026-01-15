@@ -132,6 +132,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
+    // Show or create the Settings window (responder target for "showSettingsWindow:")
+    @objc func showSettingsWindow(_ sender: Any?) {
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Reuse window if already created
+        if let existing = NSApp.windows.first(where: { $0.identifier?.rawValue == "MenuBarStats.SettingsWindow" }) {
+            existing.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        // Create a new settings window using the same SettingsView
+        let settingsVC = NSHostingController(rootView: SettingsView()
+            .environmentObject(systemMonitor)
+            .environmentObject(settings)
+            .environmentObject(hostManager)
+        )
+
+        let window = NSWindow(contentViewController: settingsVC)
+        window.title = "Settings"
+        window.identifier = NSUserInterfaceItemIdentifier(rawValue: "MenuBarStats.SettingsWindow")
+        window.setContentSize(NSSize(width: 540, height: 500))
+        window.styleMask.insert([.titled, .closable, .resizable])
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+    }
+
     @objc func applicationDidResignActive(_ notification: Notification) {
         popover?.performClose(nil)
     }

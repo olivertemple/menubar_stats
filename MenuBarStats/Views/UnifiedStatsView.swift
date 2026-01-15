@@ -96,18 +96,18 @@ struct UnifiedStatsView: View {
                 
                 // Footer with Settings and Quit buttons
                 HStack(spacing: 8) {
-                    GlassRow(action: {
-                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "gear")
-                                .foregroundColor(.secondary)
-                            Text("Settings")
-                                .font(.system(.footnote, design: .rounded))
-                                .foregroundColor(.primary)
+                    SettingsLink {
+                        GlassRow {
+                            HStack(spacing: 6) {
+                                Image(systemName: "gear")
+                                    .foregroundColor(.secondary)
+                                Text("Settings")
+                                    .font(.system(.footnote, design: .rounded))
+                                    .foregroundColor(.primary)
+                            }
+                            .padding(.vertical, 4)
+                            .frame(maxWidth: .infinity)
                         }
-                        .padding(.vertical, 4)
-                        .frame(maxWidth: .infinity)
                     }
                     
                     GlassRow(action: {
@@ -191,7 +191,7 @@ struct StatsSectionsView: View {
             }
             
             // Temperature Section
-            if settings.showTemperatureInDetail && source.temperatureAvailable {
+            if settings.showTemperatureInDetail && source.thermalAvailable {
                 TemperatureSectionView(source: source, isLocal: isLocal)
                     .environmentObject(settings)
             }

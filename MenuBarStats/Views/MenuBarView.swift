@@ -651,34 +651,42 @@ struct MenuBarView: View {
             // Footer
             HStack(spacing: 12) {
                 SettingsLink {
-                    GlassRow {
                         HStack(spacing: 6) {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 14))
                             Text("Settings")
-                                .font(.system(.body, design: .rounded))
+                                .font(.system(size: 14))
                         }
                         .foregroundColor(.accentColor)
-                    }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.regularMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Color(NSColor.separatorColor).opacity(0.08)))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(NoHighlightButtonStyle())
+                .controlSize(.small)
                 
                 Spacer()
                 
                 Button(action: {
                     NSApplication.shared.terminate(nil)
                 }) {
-                    GlassRow {
-                        HStack(spacing: 6) {
-                            Image(systemName: "power")
-                                .font(.system(size: 14))
-                            Text("Quit")
-                                .font(.system(.body, design: .rounded))
-                        }
-                        .foregroundColor(.red)
+                    HStack(spacing: 6) {
+                        Image(systemName: "power")
+                            .font(.system(size: 14))
+                        Text("Quit")
+                            .font(.system(size: 14))
                     }
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.regularMaterial, in: Capsule())
+                    .overlay(Capsule().stroke(Color(NSColor.separatorColor).opacity(0.08)))
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .controlSize(.small)
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
@@ -689,26 +697,6 @@ struct MenuBarView: View {
     
 }
 
-}
-
-struct StatRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.system(.footnote, design: .rounded))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(.footnote, design: .rounded))
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-                .monospacedDigit()
-        }
-        .padding(.vertical, 2)
-    }
 }
 
 struct MenuBarView_Previews: PreviewProvider {

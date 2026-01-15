@@ -38,6 +38,8 @@
 		A775827B2F1969E100614770 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582722F1969E100614770 /* Host.swift */; };
 		A775827C2F1969E100614770 /* RemoteLinuxStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582742F1969E100614770 /* RemoteLinuxStats.swift */; };
 		A775827D2F1969E100614770 /* RemoteLinuxStatsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */; };
+		A775827F2F19703700614770 /* UnifiedStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A775827E2F19703700614770 /* UnifiedStatsView.swift */; };
+		A77582812F19708700614770 /* StatsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582802F19708700614770 /* StatsCoordinator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +77,8 @@
 		A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteLinuxStatsSource.swift; path = Sources/RemoteLinuxStatsSource.swift; sourceTree = "<group>"; };
 		A77582762F1969E100614770 /* RemoteStatsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteStatsClient.swift; path = Network/RemoteStatsClient.swift; sourceTree = "<group>"; };
 		A77582772F1969E100614770 /* StatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsSource.swift; path = Protocols/StatsSource.swift; sourceTree = "<group>"; };
+		A775827E2F19703700614770 /* UnifiedStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedStatsView.swift; sourceTree = "<group>"; };
+		A77582802F19708700614770 /* StatsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsCoordinator.swift; path = Managers/StatsCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +103,7 @@
 		A1000028000000000000001 /* MenuBarStats */ = {
 			isa = PBXGroup;
 			children = (
+				A77582802F19708700614770 /* StatsCoordinator.swift */,
 				A77582722F1969E100614770 /* Host.swift */,
 				A77582732F1969E100614770 /* LocalStatsSource.swift */,
 				A77582742F1969E100614770 /* RemoteLinuxStats.swift */,
@@ -148,6 +153,7 @@
 		A1000031000000000000001 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A775827E2F19703700614770 /* UnifiedStatsView.swift */,
 				A77582662F1969AB00614770 /* HostEditView.swift */,
 				A77582672F1969AB00614770 /* HostManagementView.swift */,
 				A77582682F1969AB00614770 /* HostSelectorView.swift */,
@@ -263,10 +269,12 @@
 				A775826C2F1969AB00614770 /* HostSelectorView.swift in Sources */,
 				A775826D2F1969AB00614770 /* HostManagementView.swift in Sources */,
 				A1000013000000000000001 /* TemperatureMonitor.swift in Sources */,
+				A77582812F19708700614770 /* StatsCoordinator.swift in Sources */,
 				A1000015000000000000001 /* PortMonitor.swift in Sources */,
 				A1000017000000000000001 /* MenuBarView.swift in Sources */,
 				A1000019000000000000001 /* SettingsView.swift in Sources */,
 				A1000021000000000000001 /* UserSettings.swift in Sources */,
+				A775827F2F19703700614770 /* UnifiedStatsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
