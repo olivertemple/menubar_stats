@@ -81,6 +81,8 @@ class SystemMonitor: ObservableObject {
     @Published var diskWriteHistory: [Double] = []
     @Published var temperatureHistory: [Double] = []
     @Published var batteryHistory: [Double] = []
+    @Published var networkUploadHistory: [Double] = []
+    @Published var networkDownloadHistory: [Double] = []
     
     private var cpuHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var gpuHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
@@ -90,6 +92,8 @@ class SystemMonitor: ObservableObject {
     private var diskWriteHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var temperatureHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     private var batteryHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
+    private var networkUploadHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
+    private var networkDownloadHistoryBuffer = HistoryBuffer<Double>(capacity: 120)
     
     private let cpuMonitor = CPUMonitor()
     private let memoryMonitor = MemoryMonitor()
@@ -169,6 +173,14 @@ class SystemMonitor: ObservableObject {
         networkDownloadSpeed = netStats.downloadSpeed
         networkIPAddress = netStats.ipAddress
         networkMACAddress = netStats.macAddress
+        
+        // Convert to KB/s for history tracking
+        let uploadKBps = networkUploadSpeed / 1024
+        let downloadKBps = networkDownloadSpeed / 1024
+        networkUploadHistoryBuffer.add(uploadKBps)
+        networkDownloadHistoryBuffer.add(downloadKBps)
+        networkUploadHistory = networkUploadHistoryBuffer.getValues()
+        networkDownloadHistory = networkDownloadHistoryBuffer.getValues()
         
         // Temperature
         let tempStats = temperatureMonitor.getStats()

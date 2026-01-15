@@ -23,18 +23,24 @@ struct MenuBarView: View {
             Divider()
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
                         // CPU Section
                         if settings.showCPUInDetail {
                             StatSection(title: "CPU", icon: "cpu", isCollapsed: !settings.cpuSectionExpanded, summary: cpuSummary(), toggleAction: { settings.cpuSectionExpanded.toggle() }) {
                                 if settings.cpuSectionExpanded {
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    VStack(alignment: .leading, spacing: 3) {
                                         StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.cpuUsage))
 
-                                        if !systemMonitor.perCoreUsage.isEmpty {
-                                            ForEach(Array(systemMonitor.perCoreUsage.enumerated()), id: \.offset) { index, usage in
-                                                StatRow(label: "Core \(index + 1)", value: String(format: "%.1f%%", usage))
+                                        // CPU usage sparkline
+                                        if !systemMonitor.cpuHistory.isEmpty {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text("Usage History")
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(.secondary)
+                                                SparklineView(values: systemMonitor.cpuHistory, minValue: 0, maxValue: 100, lineColor: .blue)
+                                                    .frame(height: 28)
                                             }
+                                            .padding(.top, 3)
                                         }
                                     }
                                 } else {
@@ -47,20 +53,20 @@ struct MenuBarView: View {
                     if settings.showGPUInDetail {
                         StatSection(title: "GPU", icon: "videoprojector", isCollapsed: !settings.gpuSectionExpanded, summary: gpuSummary(), toggleAction: { settings.gpuSectionExpanded.toggle() }) {
                             if settings.gpuSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     if systemMonitor.gpuAvailable {
                                         StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.gpuUsage))
                                         
                                         // GPU usage sparkline
                                         if !systemMonitor.gpuHistory.isEmpty {
-                                            VStack(alignment: .leading, spacing: 4) {
+                                            VStack(alignment: .leading, spacing: 3) {
                                                 Text("Usage History")
-                                                    .font(.system(size: 11))
+                                                    .font(.system(size: 10))
                                                     .foregroundColor(.secondary)
                                                 SparklineView(values: systemMonitor.gpuHistory, minValue: 0, maxValue: 100, lineColor: .purple)
-                                                    .frame(height: 30)
+                                                    .frame(height: 28)
                                             }
-                                            .padding(.top, 4)
+                                            .padding(.top, 3)
                                         }
                                     } else {
                                         Text("GPU monitoring not available")
@@ -79,7 +85,7 @@ struct MenuBarView: View {
                     if settings.showMemoryInDetail {
                         StatSection(title: "Memory", icon: "memorychip", isCollapsed: !settings.memorySectionExpanded, summary: memorySummary(), toggleAction: { settings.memorySectionExpanded.toggle() }) {
                             if settings.memorySectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.memoryUsage))
                                     StatRow(label: "Used", value: formatBytes(systemMonitor.memoryUsed))
                                     StatRow(label: "Total", value: formatBytes(systemMonitor.memoryTotal))
@@ -93,26 +99,26 @@ struct MenuBarView: View {
                                     
                                     // Memory usage sparkline
                                     if !systemMonitor.memoryHistory.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text("Usage History")
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.secondary)
                                             SparklineView(values: systemMonitor.memoryHistory, minValue: 0, maxValue: 100, lineColor: .blue)
-                                                .frame(height: 30)
+                                                .frame(height: 28)
                                         }
-                                        .padding(.top, 4)
+                                        .padding(.top, 3)
                                     }
                                     
                                     // Memory pressure sparkline
                                     if !systemMonitor.memoryPressureHistory.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text("Pressure History")
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.secondary)
                                             SparklineView(values: systemMonitor.memoryPressureHistory, minValue: 0, maxValue: 100, lineColor: .orange)
-                                                .frame(height: 30)
+                                                .frame(height: 28)
                                         }
-                                        .padding(.top, 4)
+                                        .padding(.top, 3)
                                     }
                                 }
                             } else {
@@ -125,9 +131,36 @@ struct MenuBarView: View {
                     if settings.showNetworkInDetail {
                         StatSection(title: "Network", icon: "network", isCollapsed: !settings.networkSectionExpanded, summary: networkSummary(), toggleAction: { settings.networkSectionExpanded.toggle() }) {
                             if settings.networkSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     StatRow(label: "Upload", value: "\(formatBytes(systemMonitor.networkUploadSpeed))/s")
                                     StatRow(label: "Download", value: "\(formatBytes(systemMonitor.networkDownloadSpeed))/s")
+                                    
+                                    // Network sparklines
+                                    if !systemMonitor.networkUploadHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Upload History")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.networkUploadHistory, minValue: 0, lineColor: .orange)
+                                                .frame(height: 28)
+                                        }
+                                        .padding(.top, 3)
+                                    }
+                                    
+                                    if !systemMonitor.networkDownloadHistory.isEmpty {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Download History")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.secondary)
+                                            SparklineView(values: systemMonitor.networkDownloadHistory, minValue: 0, lineColor: .green)
+                                                .frame(height: 28)
+                                        }
+                                        .padding(.top, 3)
+                                    }
+                                    
+                                    Divider()
+                                        .padding(.vertical, 4)
+                                    
                                     StatRow(label: "IP Address", value: systemMonitor.networkIPAddress)
                                     StatRow(label: "MAC Address", value: systemMonitor.networkMACAddress)
                                 }
@@ -141,7 +174,7 @@ struct MenuBarView: View {
                     if settings.showStorageInDetail {
                         StatSection(title: "Storage", icon: "internaldrive", isCollapsed: !settings.storageSectionExpanded, summary: storageSummary(), toggleAction: { settings.storageSectionExpanded.toggle() }) {
                             if settings.storageSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.storageUsage))
                                     StatRow(label: "Used", value: formatBytes(systemMonitor.storageUsed))
                                     StatRow(label: "Total", value: formatBytes(systemMonitor.storageTotal))
@@ -156,7 +189,7 @@ struct MenuBarView: View {
                     if settings.showBatteryInDetail {
                         StatSection(title: "Battery", icon: "battery.100", isCollapsed: !settings.batterySectionExpanded, summary: batterySummary(), toggleAction: { settings.batterySectionExpanded.toggle() }) {
                             if settings.batterySectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     if systemMonitor.batteryAvailable {
                                         StatRow(label: "Percentage", value: String(format: "%.0f%%", systemMonitor.batteryPercentage))
                                         StatRow(label: "Status", value: systemMonitor.batteryIsCharging ? "Charging" : (systemMonitor.batteryIsPluggedIn ? "Plugged In" : "On Battery"))
@@ -177,14 +210,14 @@ struct MenuBarView: View {
                                         
                                         // Battery percentage sparkline
                                         if !systemMonitor.batteryHistory.isEmpty {
-                                            VStack(alignment: .leading, spacing: 4) {
+                                            VStack(alignment: .leading, spacing: 3) {
                                                 Text("Percentage History")
-                                                    .font(.system(size: 11))
+                                                    .font(.system(size: 10))
                                                     .foregroundColor(.secondary)
                                                 SparklineView(values: systemMonitor.batteryHistory, minValue: 0, maxValue: 100, lineColor: .green)
-                                                    .frame(height: 30)
+                                                    .frame(height: 28)
                                             }
-                                            .padding(.top, 4)
+                                            .padding(.top, 3)
                                         }
                                     } else {
                                         Text("Battery not available")
@@ -203,32 +236,32 @@ struct MenuBarView: View {
                     if settings.showDiskActivityInDetail {
                         StatSection(title: "Disk Activity", icon: "speedometer", isCollapsed: !settings.diskActivitySectionExpanded, summary: diskActivitySummary(), toggleAction: { settings.diskActivitySectionExpanded.toggle() }) {
                             if settings.diskActivitySectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     StatRow(label: "Read Speed", value: "\(formatBytes(systemMonitor.diskReadSpeed))/s")
                                     StatRow(label: "Write Speed", value: "\(formatBytes(systemMonitor.diskWriteSpeed))/s")
                                     
                                     // Disk read sparkline
                                     if !systemMonitor.diskReadHistory.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text("Read Speed (MB/s)")
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.secondary)
                                             SparklineView(values: systemMonitor.diskReadHistory, minValue: 0, lineColor: .cyan)
-                                                .frame(height: 30)
+                                                .frame(height: 28)
                                         }
-                                        .padding(.top, 4)
+                                        .padding(.top, 3)
                                     }
                                     
                                     // Disk write sparkline
                                     if !systemMonitor.diskWriteHistory.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text("Write Speed (MB/s)")
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.secondary)
                                             SparklineView(values: systemMonitor.diskWriteHistory, minValue: 0, lineColor: .orange)
-                                                .frame(height: 30)
+                                                .frame(height: 28)
                                         }
-                                        .padding(.top, 4)
+                                        .padding(.top, 3)
                                     }
                                 }
                             } else {
@@ -241,7 +274,7 @@ struct MenuBarView: View {
                     if settings.showDiskHealthInDetail {
                         StatSection(title: "Disk Health", icon: "checkmark.shield", isCollapsed: !settings.diskHealthSectionExpanded, summary: diskHealthSummary(), toggleAction: { settings.diskHealthSectionExpanded.toggle() }) {
                             if settings.diskHealthSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     if systemMonitor.diskHealthAvailable {
                                         StatRow(label: "Status", value: systemMonitor.diskHealthStatus)
                                         if let wearLevel = systemMonitor.diskWearLevel {
@@ -266,7 +299,7 @@ struct MenuBarView: View {
                     if settings.showTemperatureInDetail {
                         StatSection(title: "Temperature", icon: "thermometer", isCollapsed: !settings.temperatureSectionExpanded, summary: temperatureSummary(), toggleAction: { settings.temperatureSectionExpanded.toggle() }) {
                             if settings.temperatureSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     if systemMonitor.cpuTemperature > 0 {
                                         StatRow(label: "CPU", value: String(format: "%.1f°C", systemMonitor.cpuTemperature))
                                     } else {
@@ -296,14 +329,14 @@ struct MenuBarView: View {
                                     
                                     // Temperature sparkline
                                     if !systemMonitor.temperatureHistory.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text("Temperature History")
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.secondary)
                                             SparklineView(values: systemMonitor.temperatureHistory, minValue: 0, maxValue: 100, lineColor: .red)
-                                                .frame(height: 30)
+                                                .frame(height: 28)
                                         }
-                                        .padding(.top, 4)
+                                        .padding(.top, 3)
                                     }
                                 }
                             } else {
@@ -316,7 +349,7 @@ struct MenuBarView: View {
                     if settings.showAppleSiliconInDetail && systemMonitor.isAppleSilicon {
                         StatSection(title: "Apple Silicon", icon: "cpu.fill", isCollapsed: !settings.appleSiliconSectionExpanded, summary: appleSiliconSummary(), toggleAction: { settings.appleSiliconSectionExpanded.toggle() }) {
                             if settings.appleSiliconSectionExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     if let pCoreUsage = systemMonitor.pCoreUsage {
                                         StatRow(label: "P-Core Usage", value: String(format: "%.1f%%", pCoreUsage))
                                     }
@@ -545,40 +578,43 @@ struct StatSection<Content: View>: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.accentColor)
-                    .frame(width: 20)
+                    .frame(width: 18)
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.primary)
                 // Inline summary when collapsed
                 if isCollapsed, let s = summary {
                     Text(s)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
-                        .padding(.leading, 6)
+                        .padding(.leading, 4)
                 }
                 Spacer()
                 if let toggle = toggleAction {
-                    Button(action: toggle) {
-                        Image(systemName: isCollapsed ? "chevron.down" : "chevron.up")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
+                    Image(systemName: isCollapsed ? "chevron.down" : "chevron.up")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if let toggle = toggleAction {
+                    toggle()
                 }
             }
             
             content
-                .padding(.leading, 28)
+                .padding(.leading, 26)
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
         .background(Color(NSColor.controlBackgroundColor).opacity(0.02))
-        .cornerRadius(8)
+        .cornerRadius(6)
     }
 }
 
@@ -589,15 +625,15 @@ struct StatRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.system(size: 13))
+                .font(.system(size: 12))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.primary)
                 .monospacedDigit()
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 3)
     }
 }
 
