@@ -1,0 +1,149 @@
+import SwiftUI
+
+@main
+struct MenuBarStatsApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var systemMonitor = SystemMonitor()
+    @StateObject private var settings = UserSettings()
+    
+    var body: some Scene {
+        Settings {
+            SettingsView()
+                .environmentObject(settings)
+                .environmentObject(systemMonitor)
+        }
+    }
+    
+    init() {
+        // Share instances with AppDelegate
+        _systemMonitor = StateObject(wrappedValue: SystemMonitor.shared)
+        _settings = StateObject(wrappedValue: UserSettings.shared)
+    }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    var statusItem: NSStatusItem?
+    var popover: NSPopover?
+    private var menuBarUpdateTimer: Timer?
+    
+    // Use shared instances
+    private var systemMonitor: SystemMonitor {
+        SystemMonitor.shared
+    }
+    
+    private var settings: UserSettings {
+        UserSettings.shared
+    }
+    
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Create status bar item
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        
+        if let button = statusItem?.button {
+            updateMenuBarDisplay()
+            button.action = #selector(togglePopover)
+            button.target = self
+        }
+        
+        // Start monitoring with user's configured interval
+        systemMonitor.startMonitoring(interval: settings.refreshInterval)
+        
+        // Update menu bar with user's configured interval
+        startMenuBarUpdateTimer()
+        
+        // Listen for refresh interval changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshIntervalDidChange(_:)),
+            name: .refreshIntervalChanged,
+            object: nil
+        )
+        
+        // Create popover
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 420, height: 600)
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(
+            rootView: MenuBarView()
+                .environmentObject(systemMonitor)
+                .environmentObject(settings)
+        )
+        self.popover = popover
+    }
+    
+    @objc private func refreshIntervalDidChange(_ notification: Notification) {
+        startMenuBarUpdateTimer()
+    }
+    
+    private func startMenuBarUpdateTimer() {
+        menuBarUpdateTimer?.invalidate()
+        menuBarUpdateTimer = Timer.scheduledTimer(withTimeInterval: settings.refreshInterval, repeats: true) { [weak self] _ in
+            self?.updateMenuBarDisplay()
+        }
+    }
+    
+    @objc func togglePopover() {
+        guard let button = statusItem?.button else { return }
+        
+        if let popover = popover {
+            if popover.isShown {
+                popover.performClose(nil)
+            } else {
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            }
+        }
+    }
+    
+    @objc func openSettings() {
+        // Activate the app and open settings window
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+    
+    func updateMenuBarDisplay() {
+        guard let button = statusItem?.button else { return }
+        
+        var displayText = ""
+        
+        // Show primary stat
+        switch settings.menuBarPrimaryStat {
+        case .cpu:
+            displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+        case .memory:
+            displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+        case .network:
+            displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
+        case .storage:
+            displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+        }
+        
+        // Show secondary stat if enabled
+        if settings.showSecondaryStatInMenuBar {
+            displayText += " | "
+            switch settings.menuBarSecondaryStat {
+            case .cpu:
+                displayText += String(format: "CPU: %.0f%%", systemMonitor.cpuUsage)
+            case .memory:
+                displayText += String(format: "RAM: %.0f%%", systemMonitor.memoryUsage)
+            case .network:
+                displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
+            case .storage:
+                displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+            }
+        }
+        
+        button.title = displayText
+    }
+    
+    func formatBytes(_ bytes: Double) -> String {
+        if bytes < 1024 {
+            return String(format: "%.0fB", bytes)
+        } else if bytes < 1024 * 1024 {
+            return String(format: "%.0fK", bytes / 1024)
+        } else if bytes < 1024 * 1024 * 1024 {
+            return String(format: "%.1fM", bytes / (1024 * 1024))
+        } else {
+            return String(format: "%.1fG", bytes / (1024 * 1024 * 1024))
+        }
+    }
+}
