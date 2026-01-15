@@ -722,25 +722,7 @@ struct LocalMenuBarView: View {
 
 }
 
-struct StatRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.system(.footnote, design: .rounded))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(.footnote, design: .rounded))
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-                .monospacedDigit()
-        }
-        .padding(.vertical, 2)
-    }
-}
+
 
 // MARK: - Remote Host View (Simplified)
 struct RemoteMenuBarView: View {
@@ -1326,22 +1308,7 @@ struct RemoteGPUSection: View {
     }
 }
 
-struct StatRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.system(.footnote, design: .rounded))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(.footnote, design: .rounded))
-                .fontWeight(.medium)
-        }
-    }
-}
+
 
 #Preview {
     MenuBarView()
