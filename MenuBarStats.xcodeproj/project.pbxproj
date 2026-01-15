@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A717B80BB89D4EF39B25DB86 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316E0384F25D46B7B973CE13 /* GlassComponents.swift */; };
 		A1000001000000000000001 /* MenuBarStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002000000000000001 /* MenuBarStatsApp.swift */; };
 		A1000003000000000000001 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000000000000001 /* SystemMonitor.swift */; };
 		A1000007000000000000001 /* StorageMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000000000000001 /* StorageMonitor.swift */; };
@@ -28,6 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		316E0384F25D46B7B973CE13 /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassComponents.swift; sourceTree = "<group>"; };
 		A1000000000000000000001 /* MenuBarStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuBarStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000002000000000000001 /* MenuBarStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatsApp.swift; sourceTree = "<group>"; };
 		A1000004000000000000001 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A717B80BB89D4EF39B25DB86 /* GlassComponents.swift in Sources */,
 				A77582512F1941F200614770 /* SparklineView.swift in Sources */,
 				A1000001000000000000001 /* MenuBarStatsApp.swift in Sources */,
 				A1000003000000000000001 /* SystemMonitor.swift in Sources */,
