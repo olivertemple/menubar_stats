@@ -8,152 +8,164 @@ struct MenuBarView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Text("System Stats")
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
-                Button(action: {
-                    openSettings()
-                }) {
-                    Image(systemName: "gear")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(Color.secondary.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .help("Settings")
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(NSColor.controlBackgroundColor))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+            .cornerRadius(8)
+            .padding(.horizontal, 6)
             
             Divider()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    // CPU Section
-                    if settings.showCPUInDetail {
-                        StatSection(title: "CPU", icon: "cpu") {
-                            VStack(alignment: .leading, spacing: 4) {
-                                StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.cpuUsage))
-                                
-                                if !systemMonitor.perCoreUsage.isEmpty {
-                                    ForEach(Array(systemMonitor.perCoreUsage.enumerated()), id: \.offset) { index, usage in
-                                        StatRow(label: "Core \(index + 1)", value: String(format: "%.1f%%", usage))
+                        // CPU Section
+                        if settings.showCPUInDetail {
+                            StatSection(title: "CPU", icon: "cpu", isCollapsed: !settings.cpuSectionExpanded, summary: cpuSummary(), toggleAction: { settings.cpuSectionExpanded.toggle() }) {
+                                if settings.cpuSectionExpanded {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.cpuUsage))
+
+                                        if !systemMonitor.perCoreUsage.isEmpty {
+                                            ForEach(Array(systemMonitor.perCoreUsage.enumerated()), id: \.offset) { index, usage in
+                                                StatRow(label: "Core \(index + 1)", value: String(format: "%.1f%%", usage))
+                                            }
+                                        }
                                     }
+                                } else {
+                                    EmptyView()
                                 }
                             }
                         }
-                    }
                     
                     // Memory Section
                     if settings.showMemoryInDetail {
-                        StatSection(title: "Memory", icon: "memorychip") {
-                            VStack(alignment: .leading, spacing: 4) {
-                                StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.memoryUsage))
-                                StatRow(label: "Used", value: formatBytes(systemMonitor.memoryUsed))
-                                StatRow(label: "Total", value: formatBytes(systemMonitor.memoryTotal))
+                        StatSection(title: "Memory", icon: "memorychip", isCollapsed: !settings.memorySectionExpanded, summary: memorySummary(), toggleAction: { settings.memorySectionExpanded.toggle() }) {
+                            if settings.memorySectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.memoryUsage))
+                                    StatRow(label: "Used", value: formatBytes(systemMonitor.memoryUsed))
+                                    StatRow(label: "Total", value: formatBytes(systemMonitor.memoryTotal))
+                                }
+                            } else {
+                                EmptyView()
                             }
                         }
                     }
                     
                     // Network Section
                     if settings.showNetworkInDetail {
-                        StatSection(title: "Network", icon: "network") {
-                            VStack(alignment: .leading, spacing: 4) {
-                                StatRow(label: "Upload", value: "\(formatBytes(systemMonitor.networkUploadSpeed))/s")
-                                StatRow(label: "Download", value: "\(formatBytes(systemMonitor.networkDownloadSpeed))/s")
-                                StatRow(label: "IP Address", value: systemMonitor.networkIPAddress)
-                                StatRow(label: "MAC Address", value: systemMonitor.networkMACAddress)
+                        StatSection(title: "Network", icon: "network", isCollapsed: !settings.networkSectionExpanded, summary: networkSummary(), toggleAction: { settings.networkSectionExpanded.toggle() }) {
+                            if settings.networkSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    StatRow(label: "Upload", value: "\(formatBytes(systemMonitor.networkUploadSpeed))/s")
+                                    StatRow(label: "Download", value: "\(formatBytes(systemMonitor.networkDownloadSpeed))/s")
+                                    StatRow(label: "IP Address", value: systemMonitor.networkIPAddress)
+                                    StatRow(label: "MAC Address", value: systemMonitor.networkMACAddress)
+                                }
+                            } else {
+                                EmptyView()
                             }
                         }
                     }
                     
                     // Storage Section
                     if settings.showStorageInDetail {
-                        StatSection(title: "Storage", icon: "internaldrive") {
-                            VStack(alignment: .leading, spacing: 4) {
-                                StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.storageUsage))
-                                StatRow(label: "Used", value: formatBytes(systemMonitor.storageUsed))
-                                StatRow(label: "Total", value: formatBytes(systemMonitor.storageTotal))
+                        StatSection(title: "Storage", icon: "internaldrive", isCollapsed: !settings.storageSectionExpanded, summary: storageSummary(), toggleAction: { settings.storageSectionExpanded.toggle() }) {
+                            if settings.storageSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    StatRow(label: "Usage", value: String(format: "%.1f%%", systemMonitor.storageUsage))
+                                    StatRow(label: "Used", value: formatBytes(systemMonitor.storageUsed))
+                                    StatRow(label: "Total", value: formatBytes(systemMonitor.storageTotal))
+                                }
+                            } else {
+                                EmptyView()
                             }
                         }
                     }
                     
                     // Temperature Section
                     if settings.showTemperatureInDetail {
-                        StatSection(title: "Temperature", icon: "thermometer") {
-                            VStack(alignment: .leading, spacing: 4) {
-                                if systemMonitor.cpuTemperature > 0 {
-                                    StatRow(label: "CPU", value: String(format: "%.1f°C", systemMonitor.cpuTemperature))
-                                } else {
-                                    Text("Temperature monitoring requires SMC access")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.secondary)
-                                        .padding(.vertical, 4)
-                                        .padding(.horizontal, 8)
-                                        .background(Color.orange.opacity(0.1))
-                                        .cornerRadius(6)
+                        StatSection(title: "Temperature", icon: "thermometer", isCollapsed: !settings.temperatureSectionExpanded, summary: temperatureSummary(), toggleAction: { settings.temperatureSectionExpanded.toggle() }) {
+                            if settings.temperatureSectionExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if systemMonitor.cpuTemperature > 0 {
+                                        StatRow(label: "CPU", value: String(format: "%.1f°C", systemMonitor.cpuTemperature))
+                                    } else {
+                                        Text("Temperature monitoring requires SMC access")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                            .padding(.vertical, 4)
+                                            .padding(.horizontal, 8)
+                                            .background(Color.orange.opacity(0.1))
+                                            .cornerRadius(6)
+                                    }
+                                    if systemMonitor.gpuTemperature > 0 {
+                                        StatRow(label: "GPU", value: String(format: "%.1f°C", systemMonitor.gpuTemperature))
+                                    }
                                 }
-                                if systemMonitor.gpuTemperature > 0 {
-                                    StatRow(label: "GPU", value: String(format: "%.1f°C", systemMonitor.gpuTemperature))
-                                }
+                            } else {
+                                EmptyView()
                             }
                         }
                     }
                     
                     // Ports Section
                     if settings.showPortsInDetail {
-                        StatSection(title: "Open Ports", icon: "network.badge.shield.half.filled") {
-                            if systemMonitor.openPorts.isEmpty {
-                                Text("No listening ports found")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
-                                    .italic()
-                            } else {
-                                ForEach(systemMonitor.openPorts) { portInfo in
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text("Port \(portInfo.port)")
-                                                .font(.system(size: 13, weight: .medium))
-                                                .foregroundColor(.primary)
-                                            Text("\(portInfo.processName) (PID: \(portInfo.pid))")
-                                                .font(.system(size: 12))
-                                                .foregroundColor(.secondary)
+                        StatSection(title: "Open Ports", icon: "network.badge.shield.half.filled", isCollapsed: !settings.portsSectionExpanded, summary: portsSummary(), toggleAction: { settings.portsSectionExpanded.toggle() }) {
+                            if settings.portsSectionExpanded {
+                                if systemMonitor.openPorts.isEmpty {
+                                    Text("No listening ports found")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                        .italic()
+                                } else {
+                                    ForEach(systemMonitor.openPorts) { portInfo in
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text("Port \(portInfo.port)")
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.primary)
+                                                Text("\(portInfo.processName) (PID: \(portInfo.pid))")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                            Button(action: {
+                                                killPort(portInfo)
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(.red)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .help("Kill process")
                                         }
-                                        Spacer()
-                                        Button(action: {
-                                            killPort(portInfo)
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 16))
-                                                .foregroundColor(.red)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .help("Kill process")
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 8)
+                                        .background(Color.secondary.opacity(0.05))
+                                        .cornerRadius(6)
                                     }
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 8)
-                                    .background(Color.secondary.opacity(0.05))
-                                    .cornerRadius(6)
                                 }
+                            } else {
+                                EmptyView()
                             }
                         }
                     }
                 }
-                .padding(16)
+                .padding(12)
             }
             
             Divider()
             
             // Footer
             HStack(spacing: 12) {
-                Button(action: {
-                    openSettings()
-                }) {
+                SettingsLink {
                     HStack(spacing: 6) {
                         Image(systemName: "gearshape")
                             .font(.system(size: 14))
@@ -164,7 +176,9 @@ struct MenuBarView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(.accentColor)
                 
                 Spacer()
                 
@@ -181,28 +195,21 @@ struct MenuBarView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(.red)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Color(NSColor.controlBackgroundColor))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
         }
         .frame(width: 420, height: 600)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(NSColor.windowBackgroundColor)))
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
     
-    private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        
-        // Close popover first
-        if let window = NSApp.windows.first(where: { $0.isVisible && $0.level == .popUpMenu }) {
-            window.close()
-        }
-        
-        // Open settings window
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
-    }
+    
     
     private func killPort(_ portInfo: PortInfo) {
         let alert = NSAlert()
@@ -232,16 +239,50 @@ struct MenuBarView: View {
         formatter.allowedUnits = [.useAll]
         return formatter.string(fromByteCount: Int64(bytes))
     }
+
+    // MARK: - Overview summaries for collapsed sections
+    private func cpuSummary() -> String {
+        return String(format: "%.0f%%", systemMonitor.cpuUsage)
+    }
+
+    private func memorySummary() -> String {
+        return String(format: "%.0f%%", systemMonitor.memoryUsage)
+    }
+
+    private func networkSummary() -> String {
+        return "\(formatBytes(systemMonitor.networkUploadSpeed))/s • \(formatBytes(systemMonitor.networkDownloadSpeed))/s"
+    }
+
+    private func storageSummary() -> String {
+        return String(format: "%.0f%%", systemMonitor.storageUsage)
+    }
+
+    private func temperatureSummary() -> String {
+        if systemMonitor.cpuTemperature > 0 {
+            return String(format: "%.0f°C", systemMonitor.cpuTemperature)
+        }
+        return "N/A"
+    }
+
+    private func portsSummary() -> String {
+        return "\(systemMonitor.openPorts.count)"
+    }
 }
 
 struct StatSection<Content: View>: View {
     let title: String
     let icon: String
     let content: Content
-    
-    init(title: String, icon: String, @ViewBuilder content: () -> Content) {
+    let toggleAction: (() -> Void)?
+    let isCollapsed: Bool
+    let summary: String?
+
+    init(title: String, icon: String, isCollapsed: Bool = false, summary: String? = nil, toggleAction: (() -> Void)? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
+        self.toggleAction = toggleAction
+        self.isCollapsed = isCollapsed
+        self.summary = summary
         self.content = content()
     }
     
@@ -255,13 +296,31 @@ struct StatSection<Content: View>: View {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.primary)
+                // Inline summary when collapsed
+                if isCollapsed, let s = summary {
+                    Text(s)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 6)
+                }
+                Spacer()
+                if let toggle = toggleAction {
+                    Button(action: toggle) {
+                        Image(systemName: isCollapsed ? "chevron.down" : "chevron.up")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             
             content
                 .padding(.leading, 28)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 4)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.02))
+        .cornerRadius(8)
     }
 }
 
@@ -280,7 +339,7 @@ struct StatRow: View {
                 .foregroundColor(.primary)
                 .monospacedDigit()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 6)
     }
 }
 

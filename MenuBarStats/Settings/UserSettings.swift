@@ -20,6 +20,14 @@ class UserSettings: ObservableObject {
     @AppStorage("showStorageInDetail") var showStorageInDetail: Bool = true
     @AppStorage("showTemperatureInDetail") var showTemperatureInDetail: Bool = true
     @AppStorage("showPortsInDetail") var showPortsInDetail: Bool = true
+    
+    // Remember whether each detail section is expanded in the popup
+    @AppStorage("cpuSectionExpanded") var cpuSectionExpanded: Bool = true
+    @AppStorage("memorySectionExpanded") var memorySectionExpanded: Bool = true
+    @AppStorage("networkSectionExpanded") var networkSectionExpanded: Bool = true
+    @AppStorage("storageSectionExpanded") var storageSectionExpanded: Bool = true
+    @AppStorage("temperatureSectionExpanded") var temperatureSectionExpanded: Bool = true
+    @AppStorage("portsSectionExpanded") var portsSectionExpanded: Bool = true
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false {
         didSet {
             setLaunchAtLogin(launchAtLogin)
@@ -32,7 +40,7 @@ class UserSettings: ObservableObject {
         }
     }
     
-    private init() {}
+    init() {}
     
     private func setLaunchAtLogin(_ enabled: Bool) {
         // This would require adding a login item

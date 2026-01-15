@@ -29,7 +29,7 @@ class SystemMonitor: ObservableObject {
     
     private var timer: Timer?
     
-    private init() {}
+    init() {}
     
     func startMonitoring(interval: TimeInterval = 1.0) {
         // Stop any existing timer
