@@ -4,195 +4,211 @@ A native macOS menu bar application for monitoring system statistics in real-tim
 
 ![macOS](https://img.shields.io/badge/macOS-13.0+-blue.svg)
 ![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## Features
+## 📚 Documentation
 
-### System Monitoring
-- **CPU Usage**: Real-time CPU usage with per-core statistics
-- **Memory Usage**: RAM usage with detailed breakdown
+- **[User Guide](USAGE.md)**: Comprehensive guide on using MenuBarStats
+- **[Building from Source](BUILDING.md)**: Detailed instructions for building the app
+- **[Contributing](CONTRIBUTING.md)**: Guidelines for contributors
+
+## 🎯 Quick Start
+
+1. Clone and build the project (requires macOS 13.0+ and Xcode 15.0+)
+2. Run the app - it will appear in your menu bar
+3. Click the icon to view detailed statistics
+4. Click the gear icon to customize settings
+
+See [BUILDING.md](BUILDING.md) for detailed build instructions.
+
+## ✨ Features at a Glance
+
+### 📊 System Monitoring
+- **CPU Usage**: Real-time overall and per-core statistics
+- **Memory Usage**: RAM usage with detailed breakdown  
 - **Storage**: Disk usage and available space
 - **Network**: Upload/download speeds, IP address, and MAC address
 - **Temperature**: CPU and GPU temperature monitoring (when available)
-- **Open Ports**: View and manage listening network ports with the ability to kill processes
+- **Open Ports**: View and manage listening network ports
 
-### Fully Configurable
-- Choose which statistics to display in the menu bar (1-2 stats)
-- Customize the detailed view to show only the metrics you care about
+### ⚙️ Fully Configurable
+- Customize menu bar display (1-2 stats of your choice)
+- Configure detailed view to show only what you need
 - Adjustable refresh rate (0.5-5 seconds)
-- Persistent settings across app launches
+- Persistent settings
 
-### Menu Bar Integration
-- Compact display showing key metrics
-- Click to expand for detailed information
-- Runs silently in the background
-- Option to launch at login
+### 🎨 Clean Interface
+- Compact menu bar display
+- Comprehensive detailed view
+- Native macOS design
+- Light/dark mode support
 
-## Installation
+## 🚀 Installation
 
-### Requirements
-- macOS 13.0 or later
-- Xcode 15.0 or later (for building from source)
+### Option 1: Build from Source (Recommended)
 
-### Building from Source
-
-1. Clone the repository:
 ```bash
+# Clone the repository
 git clone https://github.com/olivertemple/menubar_stats.git
 cd menubar_stats
-```
 
-2. Open the project in Xcode:
-```bash
+# Build using the provided script
+./build.sh
+
+# Or open in Xcode
 open MenuBarStats.xcodeproj
 ```
 
-3. Build and run the project (⌘R)
+**Requirements**: macOS 13.0+, Xcode 15.0+
 
-### First Run
+For detailed instructions, see [BUILDING.md](BUILDING.md).
 
-After building and running the app for the first time:
-1. The app icon will appear in your menu bar
-2. Click on it to view detailed system statistics
-3. Access settings via the gear icon in the detail view
+### Option 2: Download Pre-built Binary
 
-## Usage
+*(Coming soon - check Releases page)*
+
+## 💡 Usage
 
 ### Menu Bar Display
 
-The menu bar shows 1-2 configurable statistics. By default:
-- Primary stat: CPU usage
-- Secondary stat: Memory usage
+The menu bar icon shows 1-2 statistics of your choice:
 
-Example: `CPU: 45% | RAM: 60%`
+```
+CPU: 45% | RAM: 60%
+```
+
+**Available stats**: CPU, Memory, Network Speed, Storage
 
 ### Detailed View
 
-Click the menu bar icon to see a comprehensive view including:
-- CPU usage (overall and per-core)
+Click the menu bar icon to see:
+- CPU usage (overall + per-core)
 - Memory usage and breakdown
-- Network traffic and connection info
+- Network speeds and info (IP, MAC)
 - Storage usage
 - Temperature readings
-- Open network ports
+- Open ports with process management
 
 ### Managing Open Ports
 
-In the detailed view, you can:
-- See all listening ports and their associated processes
-- Kill processes by clicking the X button next to each port
-- View process names and PIDs
+View all listening TCP ports and kill processes directly:
+1. Open the detailed view
+2. Scroll to "Open Ports"  
+3. Click the ❌ next to any port to terminate its process
 
-**Note**: Killing system processes may require administrator privileges.
+**Use case**: Quickly stop development servers, identify port conflicts, manage background services.
 
 ### Settings
 
-Access settings through the gear icon in the detailed view or via the macOS Settings window when the app is active.
+Customize everything via the gear icon (⚙️):
 
-#### General Settings
-- **Launch at Login**: Start MenuBarStats automatically when you log in
-- **Refresh Interval**: Adjust how often statistics are updated (0.5-5 seconds)
+**General**
+- Launch at login
+- Refresh interval
 
-#### Menu Bar Settings
-- **Primary Stat**: Choose the main statistic displayed in the menu bar
-- **Secondary Stat**: Choose an optional second statistic
-- **Show Secondary Stat**: Toggle the secondary stat on/off
+**Menu Bar**  
+- Primary stat selection
+- Secondary stat selection
+- Show/hide secondary stat
 
-#### Detail View Settings
-Select which statistics to display in the expanded view:
-- CPU
-- Memory
-- Network
-- Storage
-- Temperature
-- Open Ports
+**Detail View**
+- Toggle each stat section on/off
 
-## Configuration
+For comprehensive usage instructions, see [USAGE.md](USAGE.md).
 
-All settings are persisted using macOS UserDefaults and will be remembered between app launches.
+## 🏗️ Architecture
 
-### Launch at Login
+Built with native macOS technologies:
 
-To enable launch at login:
-1. Open System Settings
-2. Go to General > Login Items
-3. Click the "+" button
-4. Navigate to and select MenuBarStats.app
-5. The app will now start automatically when you log in
-
-Alternatively, toggle the "Launch at Login" option in the app's General settings.
-
-## System Requirements & Permissions
-
-### Temperature Monitoring
-
-Temperature monitoring requires access to the System Management Controller (SMC). On modern Macs with Apple Silicon, temperature readings may not be available without additional permissions or third-party tools.
-
-### Network Monitoring
-
-The app reads network statistics from system interfaces. No special permissions are required for basic network monitoring.
-
-### Port Monitoring
-
-Viewing open ports uses the `lsof` command. Killing processes may require administrator privileges depending on the process owner.
-
-## Architecture
-
-MenuBarStats is built using:
-- **SwiftUI**: Modern, declarative UI framework
-- **AppKit**: Native macOS menu bar integration
-- **Darwin/IOKit**: Low-level system monitoring APIs
+- **SwiftUI**: Modern, declarative UI
+- **AppKit**: Menu bar integration
+- **Darwin/IOKit**: Low-level system APIs
 - **Combine**: Reactive state management
 
 ### Project Structure
 
 ```
 MenuBarStats/
-├── MenuBarStatsApp.swift      # Main app entry point
-├── Monitors/                   # System monitoring modules
-│   ├── SystemMonitor.swift    # Coordinator for all monitors
-│   ├── CPUMonitor.swift       # CPU usage tracking
-│   ├── MemoryMonitor.swift    # RAM usage tracking
-│   ├── StorageMonitor.swift   # Disk usage tracking
-│   ├── NetworkMonitor.swift   # Network statistics
-│   ├── TemperatureMonitor.swift # Temperature readings
-│   └── PortMonitor.swift      # Port scanning and management
-├── Views/                      # SwiftUI views
-│   ├── MenuBarView.swift      # Detailed stats popover
-│   └── SettingsView.swift     # Settings interface
-└── Settings/                   # Configuration management
-    └── UserSettings.swift     # Persistent user preferences
+├── MenuBarStatsApp.swift          # App entry point & AppDelegate
+├── Monitors/                       # System monitoring
+│   ├── SystemMonitor.swift        # Coordinator
+│   ├── CPUMonitor.swift
+│   ├── MemoryMonitor.swift
+│   ├── StorageMonitor.swift
+│   ├── NetworkMonitor.swift
+│   ├── TemperatureMonitor.swift
+│   └── PortMonitor.swift
+├── Views/                          # SwiftUI views
+│   ├── MenuBarView.swift          # Detail popover
+│   └── SettingsView.swift         # Settings UI
+└── Settings/
+    └── UserSettings.swift         # Persistent config
 ```
 
-## Troubleshooting
+## 🔧 Technical Details
 
-### Temperature readings show 0°C
-Temperature monitoring requires special system access. This is a known limitation on modern Macs. Consider using third-party tools like iStat Menus if you need accurate temperature readings.
+- **Minimum Target**: macOS 13.0 (Ventura)
+- **Architecture**: Universal (Intel & Apple Silicon)
+- **App Type**: Menu bar only (no dock icon)
+- **Permissions**: Network client access
+- **Sandbox**: Disabled (required for system monitoring)
 
-### Network speeds appear incorrect
-Network speeds are calculated based on the difference in traffic between updates. Initial readings after app launch may be inaccurate. Wait a few seconds for accurate measurements.
+## ⚠️ Known Limitations
 
-### Port scanning doesn't show all ports
-The app only shows TCP ports in LISTEN state. UDP ports and other connection types are not currently monitored.
+### Temperature Monitoring
+Temperature readings may show 0°C on modern Macs due to System Management Controller (SMC) access restrictions. This is a macOS security limitation.
 
-### App doesn't appear in menu bar
-Ensure the app is running. If the menu bar is full, macOS may hide the icon. Try closing other menu bar apps or adjusting display settings.
+### Network Speeds
+Initial readings after launch may be inaccurate. Wait a few seconds for accurate speed measurements.
 
-## Contributing
+### Port Scanning
+- Only shows TCP ports in LISTEN state
+- Killing system processes may require admin privileges
+- UDP ports are not currently monitored
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+## 🐛 Troubleshooting
 
-## License
+**App doesn't appear in menu bar**
+- Check that the app is running
+- Menu bar may be full - try hiding other menu bar apps
+
+**Temperature shows 0°C**
+- This is expected on many modern Macs
+- Consider third-party tools like iStat Menus for temperature monitoring
+
+**Can't kill a process**
+- May require administrator privileges
+- Try running the app with elevated permissions
+
+For more troubleshooting, see [USAGE.md](USAGE.md).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Areas we'd love help with:
+- Improved temperature monitoring
+- Unit and UI tests  
+- Additional system metrics
+- Localization
+- UI/UX improvements
+
+## 📄 License
 
 This project is provided as-is for educational and personal use.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-Built with ❤️ for macOS using Swift and SwiftUI.
+Built with ❤️ for macOS developers and power users.
 
-## Support
+Special thanks to the macOS and Swift communities for the excellent documentation and tools.
 
-For issues, questions, or feature requests, please open an issue on the GitHub repository.
+## 📞 Support
+
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/olivertemple/menubar_stats/issues)
+- 💡 **Feature Requests**: [Start a discussion](https://github.com/olivertemple/menubar_stats/discussions)
+- 📖 **Documentation**: See [USAGE.md](USAGE.md) and [BUILDING.md](BUILDING.md)
 
 ---
 
-**Note**: This is a menu bar application and does not have a traditional window interface. After launching, look for the app icon in your menu bar (top-right of your screen).
+**Note**: MenuBarStats is a menu bar-only application. After launching, look for the icon in your menu bar (top-right of your screen), not in the Dock.
