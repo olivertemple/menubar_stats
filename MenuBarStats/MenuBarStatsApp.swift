@@ -21,9 +21,11 @@ struct MenuBarStatsApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
+    private var globalEventMonitor: Any?
+    private var localEventMonitor: Any?
     private var menuBarUpdateTimer: Timer?
     
     // Use shared instances
@@ -58,6 +60,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: .refreshIntervalChanged,
             object: nil
         )
+
+        // Close popover when the app resigns active (clicking away)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidResignActive(_:)),
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
         
         // Create popover
         let popover = NSPopover()
@@ -68,6 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(systemMonitor)
                 .environmentObject(settings)
         )
+        popover.delegate = self
         self.popover = popover
     }
     
@@ -89,7 +100,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if popover.isShown {
                 popover.performClose(nil)
             } else {
+                // Ensure the app is active so the popover window becomes focused immediately.
+                NSApp.activate(ignoringOtherApps: true)
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                addEventMonitors()
             }
         }
     }
@@ -98,6 +112,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Activate the app and open settings window
         NSApp.activate(ignoringOtherApps: true)
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+
+    @objc func applicationDidResignActive(_ notification: Notification) {
+        popover?.performClose(nil)
+    }
+
+    // Add global + local mouse event monitors to close the popover when clicking outside
+    private func addEventMonitors() {
+        removeEventMonitors()
+
+        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            let point = NSEvent.mouseLocation
+            if let self = self, !self.isPointInsidePopoverOrButton(point) {
+                self.popover?.performClose(nil)
+            }
+        }
+
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self else { return event }
+
+            var screenPoint = NSEvent.mouseLocation
+            if let window = event.window {
+                let windowOrigin = window.convertToScreen(NSRect(origin: event.locationInWindow, size: .zero)).origin
+                screenPoint = windowOrigin
+            }
+
+            if !self.isPointInsidePopoverOrButton(screenPoint) {
+                self.popover?.performClose(nil)
+            }
+
+            return event
+        }
+    }
+
+    private func removeEventMonitors() {
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalEventMonitor = nil
+        }
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
+        }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        removeEventMonitors()
+    }
+
+    private func isPointInsidePopoverOrButton(_ point: NSPoint) -> Bool {
+        // Check popover window
+        if let popoverWindow = popover?.contentViewController?.view.window {
+            if popoverWindow.frame.contains(point) { return true }
+        }
+
+        // Check status item button frame on screen
+        if let button = statusItem?.button, let btnWindow = button.window {
+            let btnFrameOnScreen = btnWindow.convertToScreen(button.frame)
+            if btnFrameOnScreen.contains(point) { return true }
+        }
+
+        return false
     }
     
     func updateMenuBarDisplay() {
@@ -115,6 +191,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
         case .storage:
             displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+        case .battery:
+            if systemMonitor.batteryAvailable {
+                let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
+                displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+            } else {
+                displayText += "No Battery"
+            }
+        case .disk:
+            let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
+            let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+            displayText += String(format: "R:%.0fMB W:%.0fMB", readMB, writeMB)
         }
         
         // Show secondary stat if enabled
@@ -129,6 +216,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
             case .storage:
                 displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+            case .battery:
+                if systemMonitor.batteryAvailable {
+                    let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
+                    displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+                } else {
+                    displayText += "No Bat"
+                }
+            case .disk:
+                let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
+                let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+                displayText += String(format: "↓%.0f ↑%.0f", readMB, writeMB)
             }
         }
         

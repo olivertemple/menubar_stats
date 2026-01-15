@@ -89,6 +89,7 @@ struct GeneralSettingsView: View {
                     .font(.headline)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }
@@ -150,6 +151,7 @@ struct MenuBarSettingsView: View {
                     .font(.headline)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }
@@ -171,13 +173,23 @@ struct DetailViewSettingsView: View {
             Section {
                 Toggle("CPU Usage", isOn: $settings.showCPUInDetail)
                     .toggleStyle(.switch)
+                Toggle("GPU Load", isOn: $settings.showGPUInDetail)
+                    .toggleStyle(.switch)
                 Toggle("Memory Usage", isOn: $settings.showMemoryInDetail)
                     .toggleStyle(.switch)
                 Toggle("Network Statistics", isOn: $settings.showNetworkInDetail)
                     .toggleStyle(.switch)
                 Toggle("Storage Usage", isOn: $settings.showStorageInDetail)
                     .toggleStyle(.switch)
-                Toggle("Temperature", isOn: $settings.showTemperatureInDetail)
+                Toggle("Battery Info", isOn: $settings.showBatteryInDetail)
+                    .toggleStyle(.switch)
+                Toggle("Disk Activity", isOn: $settings.showDiskActivityInDetail)
+                    .toggleStyle(.switch)
+                Toggle("Disk Health", isOn: $settings.showDiskHealthInDetail)
+                    .toggleStyle(.switch)
+                Toggle("Temperature & Thermal", isOn: $settings.showTemperatureInDetail)
+                    .toggleStyle(.switch)
+                Toggle("Apple Silicon Stats", isOn: $settings.showAppleSiliconInDetail)
                     .toggleStyle(.switch)
                 Toggle("Open Ports", isOn: $settings.showPortsInDetail)
                     .toggleStyle(.switch)
@@ -193,6 +205,7 @@ struct DetailViewSettingsView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .tint(.accentColor)
         .formStyle(.grouped)
         .padding(20)
     }

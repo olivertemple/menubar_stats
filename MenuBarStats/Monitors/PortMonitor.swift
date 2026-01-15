@@ -47,13 +47,25 @@ class PortMonitor {
                             // Extract port from format like "*:8080"
                             if let portString = nameComponent.components(separatedBy: ":").last,
                                let port = Int(portString) {
-                                let portInfo = PortInfo(
-                                    port: port,
-                                    processName: processName,
-                                    pid: pid,
-                                    protocolType: "TCP"
-                                )
-                                ports.append(portInfo)
+                                
+                                // Filter: Only show user ports (1024-65535) and exclude common system services
+                                // This typically includes dev servers, local apps, etc.
+                                let isUserPort = port >= 1024
+                                
+                                // Exclude common system services even if they're on high ports
+                                let systemProcesses = ["mDNSResponder", "rapportd", "sharingd", "nsurlsessiond", 
+                                                      "cloudd", "bird", "trustd", "identityservicesd"]
+                                let isSystemProcess = systemProcesses.contains(processName)
+                                
+                                if isUserPort && !isSystemProcess {
+                                    let portInfo = PortInfo(
+                                        port: port,
+                                        processName: processName,
+                                        pid: pid,
+                                        protocolType: "TCP"
+                                    )
+                                    ports.append(portInfo)
+                                }
                             }
                         }
                     }
