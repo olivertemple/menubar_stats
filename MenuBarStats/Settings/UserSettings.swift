@@ -6,6 +6,8 @@ enum StatType: String, CaseIterable, Codable {
     case memory = "Memory"
     case network = "Network"
     case storage = "Storage"
+    case battery = "Battery"
+    case disk = "Disk"
 }
 
 class UserSettings: ObservableObject {
@@ -21,6 +23,13 @@ class UserSettings: ObservableObject {
     @AppStorage("showTemperatureInDetail") var showTemperatureInDetail: Bool = true
     @AppStorage("showPortsInDetail") var showPortsInDetail: Bool = true
     
+    // New section toggles
+    @AppStorage("showGPUInDetail") var showGPUInDetail: Bool = true
+    @AppStorage("showBatteryInDetail") var showBatteryInDetail: Bool = true
+    @AppStorage("showDiskActivityInDetail") var showDiskActivityInDetail: Bool = true
+    @AppStorage("showDiskHealthInDetail") var showDiskHealthInDetail: Bool = true
+    @AppStorage("showAppleSiliconInDetail") var showAppleSiliconInDetail: Bool = true
+    
     // Remember whether each detail section is expanded in the popup
     @AppStorage("cpuSectionExpanded") var cpuSectionExpanded: Bool = true
     @AppStorage("memorySectionExpanded") var memorySectionExpanded: Bool = true
@@ -28,6 +37,14 @@ class UserSettings: ObservableObject {
     @AppStorage("storageSectionExpanded") var storageSectionExpanded: Bool = true
     @AppStorage("temperatureSectionExpanded") var temperatureSectionExpanded: Bool = true
     @AppStorage("portsSectionExpanded") var portsSectionExpanded: Bool = true
+    
+    // New section expansion states
+    @AppStorage("gpuSectionExpanded") var gpuSectionExpanded: Bool = true
+    @AppStorage("batterySectionExpanded") var batterySectionExpanded: Bool = true
+    @AppStorage("diskActivitySectionExpanded") var diskActivitySectionExpanded: Bool = true
+    @AppStorage("diskHealthSectionExpanded") var diskHealthSectionExpanded: Bool = true
+    @AppStorage("appleSiliconSectionExpanded") var appleSiliconSectionExpanded: Bool = true
+    
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false {
         didSet {
             setLaunchAtLogin(launchAtLogin)

@@ -6,8 +6,14 @@ struct CPUStats {
     let perCore: [Double]
 }
 
-class CPUMonitor {
+class CPUMonitor: StatsProvider {
+    typealias StatsType = CPUStats
+    
     private var previousCPUInfo: [host_cpu_load_info] = []
+    
+    func getStats() -> CPUStats {
+        return getCPUUsage()
+    }
     
     func getCPUUsage() -> CPUStats {
         var size = mach_msg_type_number_t(MemoryLayout<processor_info_array_t>.size)
@@ -64,5 +70,9 @@ class CPUMonitor {
         let overallUsage = totalTicks > 0 ? ((totalUser + totalSystem + totalNice) / totalTicks) * 100.0 : 0.0
         
         return CPUStats(overall: overallUsage, perCore: perCoreUsage)
+    }
+    
+    func reset() {
+        previousCPUInfo.removeAll()
     }
 }

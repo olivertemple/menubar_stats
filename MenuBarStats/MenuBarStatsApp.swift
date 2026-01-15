@@ -115,6 +115,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             displayText += formatBytes(systemMonitor.networkUploadSpeed) + "↑"
         case .storage:
             displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+        case .battery:
+            if systemMonitor.batteryAvailable {
+                let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
+                displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+            } else {
+                displayText += "No Battery"
+            }
+        case .disk:
+            let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
+            let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+            displayText += String(format: "R:%.0fMB W:%.0fMB", readMB, writeMB)
         }
         
         // Show secondary stat if enabled
@@ -129,6 +140,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 displayText += formatBytes(systemMonitor.networkDownloadSpeed) + "↓"
             case .storage:
                 displayText += String(format: "Disk: %.0f%%", systemMonitor.storageUsage)
+            case .battery:
+                if systemMonitor.batteryAvailable {
+                    let icon = systemMonitor.batteryIsCharging ? "⚡" : "🔋"
+                    displayText += String(format: "%@%.0f%%", icon, systemMonitor.batteryPercentage)
+                } else {
+                    displayText += "No Bat"
+                }
+            case .disk:
+                let readMB = systemMonitor.diskReadSpeed / (1024 * 1024)
+                let writeMB = systemMonitor.diskWriteSpeed / (1024 * 1024)
+                displayText += String(format: "↓%.0f ↑%.0f", readMB, writeMB)
             }
         }
         
