@@ -26,10 +26,21 @@
 		A77582512F1941F200614770 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582502F1941F200614770 /* SparklineView.swift */; };
 		A77582542F19439600614770 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582532F19439600614770 /* NetworkMonitor.swift */; };
 		A77582562F1954C800614770 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582552F1954C800614770 /* GlassComponents.swift */; };
+		A775826A2F1969AB00614770 /* TestConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582692F1969AB00614770 /* TestConnectionView.swift */; };
+		A775826B2F1969AB00614770 /* HostEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582662F1969AB00614770 /* HostEditView.swift */; };
+		A775826C2F1969AB00614770 /* HostSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582682F1969AB00614770 /* HostSelectorView.swift */; };
+		A775826D2F1969AB00614770 /* HostManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582672F1969AB00614770 /* HostManagementView.swift */; };
+		A77582702F1969C900614770 /* HostManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A775826E2F1969C900614770 /* HostManager.swift */; };
+		A77582712F1969C900614770 /* StatsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A775826F2F1969C900614770 /* StatsCoordinator.swift */; };
+		A77582782F1969E100614770 /* RemoteStatsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582762F1969E100614770 /* RemoteStatsClient.swift */; };
+		A77582792F1969E100614770 /* StatsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582772F1969E100614770 /* StatsSource.swift */; };
+		A775827A2F1969E100614770 /* LocalStatsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582732F1969E100614770 /* LocalStatsSource.swift */; };
+		A775827B2F1969E100614770 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582722F1969E100614770 /* Host.swift */; };
+		A775827C2F1969E100614770 /* RemoteLinuxStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582742F1969E100614770 /* RemoteLinuxStats.swift */; };
+		A775827D2F1969E100614770 /* RemoteLinuxStatsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-        
 		A1000000000000000000001 /* MenuBarStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuBarStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000002000000000000001 /* MenuBarStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatsApp.swift; sourceTree = "<group>"; };
 		A1000004000000000000001 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
@@ -52,6 +63,18 @@
 		A77582502F1941F200614770 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
 		A77582532F19439600614770 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		A77582552F1954C800614770 /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassComponents.swift; sourceTree = "<group>"; };
+		A77582662F1969AB00614770 /* HostEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostEditView.swift; sourceTree = "<group>"; };
+		A77582672F1969AB00614770 /* HostManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostManagementView.swift; sourceTree = "<group>"; };
+		A77582682F1969AB00614770 /* HostSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostSelectorView.swift; sourceTree = "<group>"; };
+		A77582692F1969AB00614770 /* TestConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestConnectionView.swift; sourceTree = "<group>"; };
+		A775826E2F1969C900614770 /* HostManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HostManager.swift; path = Managers/HostManager.swift; sourceTree = "<group>"; };
+		A775826F2F1969C900614770 /* StatsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsCoordinator.swift; path = Managers/StatsCoordinator.swift; sourceTree = "<group>"; };
+		A77582722F1969E100614770 /* Host.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Host.swift; path = Models/Host.swift; sourceTree = "<group>"; };
+		A77582732F1969E100614770 /* LocalStatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LocalStatsSource.swift; path = Sources/LocalStatsSource.swift; sourceTree = "<group>"; };
+		A77582742F1969E100614770 /* RemoteLinuxStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteLinuxStats.swift; path = Models/RemoteLinuxStats.swift; sourceTree = "<group>"; };
+		A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteLinuxStatsSource.swift; path = Sources/RemoteLinuxStatsSource.swift; sourceTree = "<group>"; };
+		A77582762F1969E100614770 /* RemoteStatsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RemoteStatsClient.swift; path = Network/RemoteStatsClient.swift; sourceTree = "<group>"; };
+		A77582772F1969E100614770 /* StatsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsSource.swift; path = Protocols/StatsSource.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +99,14 @@
 		A1000028000000000000001 /* MenuBarStats */ = {
 			isa = PBXGroup;
 			children = (
+				A77582722F1969E100614770 /* Host.swift */,
+				A77582732F1969E100614770 /* LocalStatsSource.swift */,
+				A77582742F1969E100614770 /* RemoteLinuxStats.swift */,
+				A77582752F1969E100614770 /* RemoteLinuxStatsSource.swift */,
+				A77582762F1969E100614770 /* RemoteStatsClient.swift */,
+				A77582772F1969E100614770 /* StatsSource.swift */,
+				A775826E2F1969C900614770 /* HostManager.swift */,
+				A775826F2F1969C900614770 /* StatsCoordinator.swift */,
 				A77582442F1941DB00614770 /* HistoryBuffer.swift */,
 				A77582452F1941DB00614770 /* StatsProvider.swift */,
 				A1000002000000000000001 /* MenuBarStatsApp.swift */,
@@ -117,6 +148,10 @@
 		A1000031000000000000001 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A77582662F1969AB00614770 /* HostEditView.swift */,
+				A77582672F1969AB00614770 /* HostManagementView.swift */,
+				A77582682F1969AB00614770 /* HostSelectorView.swift */,
+				A77582692F1969AB00614770 /* TestConnectionView.swift */,
 				A77582552F1954C800614770 /* GlassComponents.swift */,
 				A77582502F1941F200614770 /* SparklineView.swift */,
 				A1000018000000000000001 /* MenuBarView.swift */,
@@ -201,8 +236,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-                
+				A77582782F1969E100614770 /* RemoteStatsClient.swift in Sources */,
+				A77582792F1969E100614770 /* StatsSource.swift in Sources */,
+				A775827A2F1969E100614770 /* LocalStatsSource.swift in Sources */,
+				A775827B2F1969E100614770 /* Host.swift in Sources */,
+				A775827C2F1969E100614770 /* RemoteLinuxStats.swift in Sources */,
+				A775827D2F1969E100614770 /* RemoteLinuxStatsSource.swift in Sources */,
 				A77582512F1941F200614770 /* SparklineView.swift in Sources */,
+				A77582702F1969C900614770 /* HostManager.swift in Sources */,
+				A77582712F1969C900614770 /* StatsCoordinator.swift in Sources */,
 				A1000001000000000000001 /* MenuBarStatsApp.swift in Sources */,
 				A1000003000000000000001 /* SystemMonitor.swift in Sources */,
 				A1000007000000000000001 /* StorageMonitor.swift in Sources */,
@@ -216,6 +258,10 @@
 				A77582472F1941DB00614770 /* StatsProvider.swift in Sources */,
 				A1000009000000000000001 /* MemoryMonitor.swift in Sources */,
 				A1000011000000000000001 /* CPUMonitor.swift in Sources */,
+				A775826A2F1969AB00614770 /* TestConnectionView.swift in Sources */,
+				A775826B2F1969AB00614770 /* HostEditView.swift in Sources */,
+				A775826C2F1969AB00614770 /* HostSelectorView.swift in Sources */,
+				A775826D2F1969AB00614770 /* HostManagementView.swift in Sources */,
 				A1000013000000000000001 /* TemperatureMonitor.swift in Sources */,
 				A1000015000000000000001 /* PortMonitor.swift in Sources */,
 				A1000017000000000000001 /* MenuBarView.swift in Sources */,
