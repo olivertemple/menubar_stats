@@ -11,10 +11,9 @@ class CPUMonitor {
     
     func getCPUUsage() -> CPUStats {
         var size = mach_msg_type_number_t(MemoryLayout<processor_info_array_t>.size)
-        var cpuLoadInfo: processor_cpu_load_info_t!
+        var cpuLoadInfo: processor_info_array_t?
         var processorMsgCount = mach_msg_type_number_t(0)
         var processorCount = natural_t(0)
-        var cpuLoad: host_cpu_load_info!
         
         let result = host_processor_info(
             mach_host_self(),
@@ -34,8 +33,14 @@ class CPUMonitor {
         var totalNice: Double = 0
         var perCoreUsage: [Double] = []
         
+        guard let cpuInfo = cpuLoadInfo else {
+            return CPUStats(overall: 0.0, perCore: [])
+        }
+        
+        let cpuLoad = UnsafeMutableRawPointer(cpuInfo).assumingMemoryBound(to: processor_cpu_load_info.self)
+        
         for i in 0..<Int(processorCount) {
-            let cpu = cpuLoadInfo[i]
+            let cpu = cpuLoad[i]
             let user = Double(cpu.cpu_ticks.0)
             let system = Double(cpu.cpu_ticks.1)
             let idle = Double(cpu.cpu_ticks.2)

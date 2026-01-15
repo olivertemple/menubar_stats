@@ -5,7 +5,7 @@ struct PortInfo: Identifiable, Hashable {
     let port: Int
     let processName: String
     let pid: Int32
-    let protocol: String
+    let protocolType: String
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -51,7 +51,7 @@ class PortMonitor {
                                     port: port,
                                     processName: processName,
                                     pid: pid,
-                                    protocol: "TCP"
+                                    protocolType: "TCP"
                                 )
                                 ports.append(portInfo)
                             }
