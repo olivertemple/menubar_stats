@@ -120,7 +120,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             } else {
                 // Ensure the app is active so the popover window becomes focused immediately.
                 NSApp.activate(ignoringOtherApps: true)
+                
+                // Position popover relative to button with proper edge detection
+                // This ensures correct positioning even when menu bar items are pushed around
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                
+                // Ensure popover stays positioned correctly by checking screen bounds
+                if let popoverWindow = popover.contentViewController?.view.window,
+                   let buttonWindow = button.window {
+                    let buttonFrame = buttonWindow.convertToScreen(button.frame)
+                    var popoverFrame = popoverWindow.frame
+                    
+                    // Get the screen containing the menu bar button
+                    if let screen = NSScreen.screens.first(where: { $0.frame.contains(buttonFrame.origin) }) {
+                        let screenFrame = screen.visibleFrame
+                        
+                        // Adjust horizontal position if popover goes off-screen
+                        if popoverFrame.maxX > screenFrame.maxX {
+                            popoverFrame.origin.x = screenFrame.maxX - popoverFrame.width - 10
+                        }
+                        if popoverFrame.minX < screenFrame.minX {
+                            popoverFrame.origin.x = screenFrame.minX + 10
+                        }
+                        
+                        // Adjust vertical position if needed
+                        if popoverFrame.minY < screenFrame.minY {
+                            popoverFrame.origin.y = screenFrame.minY + 10
+                        }
+                        
+                        popoverWindow.setFrame(popoverFrame, display: true)
+                    }
+                }
+                
                 addEventMonitors()
             }
         }

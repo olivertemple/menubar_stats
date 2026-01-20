@@ -216,7 +216,7 @@ struct LocalMenuBarView: View {
                                 HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "network")
                                         .font(.system(size: 20))
-                                        .foregroundColor(.green)
+                                        .foregroundColor(.orange)
                                         .frame(width: 20, height: 20, alignment: .center)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
@@ -275,7 +275,7 @@ struct LocalMenuBarView: View {
                         GlassRow(action: { settings.storageSectionExpanded.toggle() }) {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack(alignment: .top, spacing: 10) {
-                                    Image(systemName: "internaldrive")
+                                    Image(systemName: "externaldrive")
                                         .font(.system(size: 20))
                                         .foregroundColor(.indigo)
                                         .frame(width: 20, height: 20, alignment: .center)
@@ -947,7 +947,7 @@ struct RemoteMemorySection: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "memorychip")
                         .font(.system(size: 20))
-                        .foregroundColor(.green)
+                        .foregroundColor(.blue)
                         .frame(width: 20, height: 20)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -976,7 +976,7 @@ struct RemoteMemorySection: View {
                                 Text("Usage History")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
-                                SubtleSparkline(values: source.memoryHistory, color: .green)
+                                SubtleSparkline(values: source.memoryHistory, color: .blue)
                             }
                         }
                     }
@@ -1070,7 +1070,7 @@ struct RemoteDiskActivitySection: View {
         GlassRow(action: { settings.diskActivitySectionExpanded.toggle() }) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "internaldrive")
+                    Image(systemName: "speedometer")
                         .font(.system(size: 20))
                         .foregroundColor(.cyan)
                         .frame(width: 20, height: 20)
@@ -1140,7 +1140,7 @@ struct RemoteStorageSection: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "externaldrive")
                         .font(.system(size: 20))
-                        .foregroundColor(.yellow)
+                        .foregroundColor(.indigo)
                         .frame(width: 20, height: 20)
                     
                     VStack(alignment: .leading, spacing: 2) {

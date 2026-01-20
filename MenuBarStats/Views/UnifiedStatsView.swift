@@ -313,7 +313,7 @@ struct MemorySectionView: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "memorychip")
                         .font(.system(size: 20))
-                        .foregroundColor(.green)
+                        .foregroundColor(.blue)
                         .frame(width: 20, height: 20, alignment: .center)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -342,7 +342,7 @@ struct MemorySectionView: View {
                                 Text("Usage History")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
-                                SubtleSparkline(values: source.memoryHistory, color: .green)
+                                SubtleSparkline(values: source.memoryHistory, color: .blue)
                             }
                         }
                     }
@@ -404,7 +404,7 @@ struct DiskActivitySectionView: View {
         GlassRow(action: { settings.diskActivitySectionExpanded.toggle() }) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "internaldrive")
+                    Image(systemName: "speedometer")
                         .font(.system(size: 20))
                         .foregroundColor(.cyan)
                         .frame(width: 20, height: 20, alignment: .center)
@@ -450,7 +450,7 @@ struct StorageSectionView: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "externaldrive")
                         .font(.system(size: 20))
-                        .foregroundColor(.yellow)
+                        .foregroundColor(.indigo)
                         .frame(width: 20, height: 20, alignment: .center)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -660,7 +660,7 @@ struct AppleSiliconSectionView: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "cpu.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                         .frame(width: 20, height: 20, alignment: .center)
                     
                     VStack(alignment: .leading, spacing: 2) {
