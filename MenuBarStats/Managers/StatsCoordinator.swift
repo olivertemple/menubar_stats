@@ -13,8 +13,10 @@ class StatsCoordinator: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var updateTimer: Timer?
     private var remoteSources: [UUID: RemoteLinuxStatsSource] = [:]
+    private var lastFetchTime: [UUID: Date] = [:]
     
     private let updateInterval: TimeInterval = 1.0
+    private let truenasUpdateInterval: TimeInterval = 5.0 // Longer interval for TrueNAS to reduce API load
     private var isStarted = false
     
     init(hostManager: HostManager = HostManager.shared) {
@@ -98,6 +100,19 @@ class StatsCoordinator: ObservableObject {
               currentHost.type == .remote,
               currentHost.enabled else {
             return
+        }
+        
+        // For TrueNAS API hosts, use a longer polling interval to reduce server load
+        if currentHost.connectionMode == .truenasAPI {
+            let now = Date()
+            if let lastFetch = lastFetchTime[currentHost.id] {
+                let timeSinceLastFetch = now.timeIntervalSince(lastFetch)
+                if timeSinceLastFetch < truenasUpdateInterval {
+                    // Skip this update - not enough time has passed
+                    return
+                }
+            }
+            lastFetchTime[currentHost.id] = now
         }
         
         Task {
