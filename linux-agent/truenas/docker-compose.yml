@@ -1,0 +1,27 @@
+# Simple docker-compose for running the MenuBarStats Linux Agent
+# NOTE: This must run on a Linux host (VM on TrueNAS Core). It will not run on FreeBSD.
+# Replace the image value with your pushed image if different.
+
+version: '3.8'
+
+services:
+  menubar-agent:
+    image: docker.io/olivertemple/menuar-agent:latest
+    container_name: menuar-agent
+    security_opt:
+      - apparmor=unconfined
+    restart: unless-stopped
+    environment:
+      - AGENT_PORT=9955
+      - AGENT_INTERVAL_MS=1000
+      - AGENT_LOG_LEVEL=info
+      # Provide the token either via an environment file or export before `docker-compose up`
+    ports:
+      - "9955:9955"
+    # Uncomment and adjust if you want the container to run non-root (ensure binary permissions allow it)
+    # user: "1000:1000"
+
+# Usage:
+# 1) Place this file on the Linux VM and create a .env with AGENT_TOKEN=your-token
+# 2) Run: docker-compose up -d
+# 3) Or without .env: AGENT_TOKEN=your-token docker-compose up -d

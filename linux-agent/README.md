@@ -80,7 +80,7 @@ docker run \
    - **Image**: `your-registry/menubar-stats-agent:latest`
    - **Port**: Host Port `9955` → Container Port `9955`
    - **Environment Variables**: Add `AGENT_TOKEN` if needed
-   - **Host Path Volumes**: 
+   - **Host Path Volumes**:
      - `/proc` → `/host/proc` (Read Only)
      - `/sys` → `/host/sys` (Read Only)
    - **Security Context**: Enable privileged if needed
