@@ -391,10 +391,27 @@ func (c *Collector) collectFilesystems() []Filesystem {
 		return nil
 	}
 	defer file.Close()
+	// First pass: collect mount entries and their raw statfs values
+	type mountEntry struct {
+		fs Filesystem
+		total uint64
+		available uint64
+		free uint64
+		used uint64
+	}
 
-	var filesystems []Filesystem
+	entries := make([]mountEntry, 0)
 	scanner := bufio.NewScanner(file)
 	seen := make(map[string]bool)
+
+	// skip types map
+	skipTypes := map[string]bool{
+		"proc": true, "sysfs": true, "tmpfs": true, "devtmpfs": true, "devpts": true,
+		"cgroup": true, "cgroup2": true, "nsfs": true, "overlay": true, "squashfs": true,
+		"autofs": true, "mqueue": true, "hugetlbfs": true, "debugfs": true, "tracefs": true,
+		"securityfs": true, "pstore": true, "bpf": true, "configfs": true, "fusectl": true,
+		"binfmt_misc": true, "ramfs": true, "efivarfs": true, "rpc_pipefs": true,
+	}
 
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
@@ -406,19 +423,10 @@ func (c *Collector) collectFilesystems() []Filesystem {
 		mountPoint := fields[1]
 		fsType := fields[2]
 
-		// Skip non-physical filesystems
-		skipTypes := map[string]bool{
-			"proc": true, "sysfs": true, "tmpfs": true, "devtmpfs": true, "devpts": true,
-			"cgroup": true, "cgroup2": true, "nsfs": true, "overlay": true, "squashfs": true,
-			"autofs": true, "mqueue": true, "hugetlbfs": true, "debugfs": true, "tracefs": true,
-			"securityfs": true, "pstore": true, "bpf": true, "configfs": true, "fusectl": true,
-			"binfmt_misc": true, "ramfs": true, "efivarfs": true, "rpc_pipefs": true,
-		}
 		if skipTypes[fsType] {
 			continue
 		}
 
-		// Skip duplicate mount points
 		if seen[mountPoint] {
 			continue
 		}
@@ -430,13 +438,16 @@ func (c *Collector) collectFilesystems() []Filesystem {
 			FsType:     &fsType,
 		}
 
-		// Get filesystem usage
+		var total, available, free, used uint64
 		var stat syscall.Statfs_t
 		if err := syscall.Statfs(mountPoint, &stat); err == nil {
-			total := stat.Blocks * uint64(stat.Bsize)
-			available := stat.Bavail * uint64(stat.Bsize)
-			free := stat.Bfree * uint64(stat.Bsize)
-			used := total - free
+			total = stat.Blocks * uint64(stat.Bsize)
+			available = stat.Bavail * uint64(stat.Bsize)
+			free = stat.Bfree * uint64(stat.Bsize)
+			used = 0
+			if total > free {
+				used = total - free
+			}
 
 			fs.TotalBytes = &total
 			fs.AvailableBytes = &available
@@ -448,10 +459,107 @@ func (c *Collector) collectFilesystems() []Filesystem {
 			}
 		}
 
-		filesystems = append(filesystems, fs)
+		entries = append(entries, mountEntry{fs: fs, total: total, available: available, free: free, used: used})
+	}
+
+	// Second pass: build final filesystems list with special handling for /mnt/* mounts
+	var filesystems []Filesystem
+	// Determine whether we should apply the TrueNAS /mnt/ special-case.
+	// Can be controlled by env var MENUBAR_TRUENAS_MNT_FIX: "on"/"true"/"1", "off"/"false"/"0", or "auto"/empty.
+	applyTruenasMntFix := false
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("MENUBAR_TRUENAS_MNT_FIX"))) {
+	case "on", "true", "1":
+		applyTruenasMntFix = true
+	case "off", "false", "0":
+		applyTruenasMntFix = false
+	default:
+		applyTruenasMntFix = isLikelyContainer() && isLikelyTrueNAS()
+	}
+	for i := range entries {
+		entry := entries[i]
+		mp := entry.fs.MountPoint
+		if applyTruenasMntFix && strings.HasPrefix(mp, "/mnt/") {
+			// If mountpoint is under /mnt/ and is a child (e.g. /mnt/foo/bar), skip it.
+			rel := strings.TrimPrefix(mp, "/mnt/")
+			if strings.Contains(rel, "/") {
+				// child dataset; skip - its usage will be accumulated into the root
+				continue
+			}
+
+			// For top-level /mnt/<name>, accumulate used from any children
+			var usedSum uint64 = 0
+			for j := range entries {
+				child := entries[j]
+				if child.fs.MountPoint == mp {
+					if child.used != 0 {
+						usedSum += child.used
+					}
+					continue
+				}
+				if strings.HasPrefix(child.fs.MountPoint, mp+"/") {
+					if child.used != 0 {
+						usedSum += child.used
+					}
+				}
+			}
+
+			// If no children contributed used, fall back to the root entry's used value
+			if usedSum == 0 {
+				usedSum = entry.used
+			}
+
+			// Available bytes - prefer the root's available value
+			avail := entry.available
+
+			// Compute total as used + available (handles TrueNAS display quirk)
+			total := usedSum + avail
+
+			fs := entry.fs
+			fs.UsedBytes = &usedSum
+			fs.AvailableBytes = &avail
+			fs.TotalBytes = &total
+			if total > 0 {
+				usagePercent := (float64(usedSum) / float64(total)) * 100.0
+				fs.UsagePercent = &usagePercent
+			}
+
+			filesystems = append(filesystems, fs)
+			continue
+		}
+
+		// Non-/mnt mounts or when fix not applied: keep as-is
+		filesystems = append(filesystems, entry.fs)
 	}
 
 	return filesystems
+}
+
+// isLikelyContainer returns true when the process appears to be running inside a container.
+func isLikelyContainer() bool {
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	if data, err := os.ReadFile("/proc/1/cgroup"); err == nil {
+		s := string(data)
+		if strings.Contains(s, "docker") || strings.Contains(s, "containerd") || strings.Contains(s, "kubepods") {
+			return true
+		}
+	}
+	return false
+}
+
+// isLikelyTrueNAS does a best-effort check for TrueNAS SCALE environment.
+func isLikelyTrueNAS() bool {
+	if _, err := os.Stat("/etc/truenas-release"); err == nil {
+		return true
+	}
+	if data, err := os.ReadFile("/etc/os-release"); err == nil {
+		s := strings.ToLower(string(data))
+		if strings.Contains(s, "truenas") {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Collector) collectNetwork() *NetworkStats {

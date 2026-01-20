@@ -1,0 +1,9 @@
+[Unit]
+Description=Run menubar-harddrives.service periodically
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5m
+
+[Install]
+WantedBy=timers.target

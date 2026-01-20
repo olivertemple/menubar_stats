@@ -15,9 +15,13 @@ services:
       - AGENT_PORT=9955
       - AGENT_INTERVAL_MS=1000
       - AGENT_LOG_LEVEL=info
+      # Controls the TrueNAS /mnt/ aggregation logic in the agent: on/off/auto
+      - MENUBAR_TRUENAS_MNT_FIX=on
       # Provide the token either via an environment file or export before `docker-compose up`
     ports:
       - "9955:9955"
+    volumes:
+      - /mnt/Hard_Drives:/mnt/Hard_Drives
     # Uncomment and adjust if you want the container to run non-root (ensure binary permissions allow it)
     # user: "1000:1000"
 
@@ -25,3 +29,4 @@ services:
 # 1) Place this file on the Linux VM and create a .env with AGENT_TOKEN=your-token
 # 2) Run: docker-compose up -d
 # 3) Or without .env: AGENT_TOKEN=your-token docker-compose up -d
+

@@ -1,0 +1,11 @@
+[Unit]
+Description=Export Menubar hard drives ZFS info
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/export_harddrives_info.sh
+Nice=0
+
+[Install]
+WantedBy=multi-user.target
