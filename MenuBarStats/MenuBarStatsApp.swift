@@ -224,7 +224,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // Prevent app from terminating - it's a menu bar app that should always run
+        // Allow termination during system shutdown/logout, but prevent user-initiated quits
+        // Check if this is a system-initiated shutdown
+        if NSApp.currentEvent?.type == .systemDefined {
+            return .terminateNow
+        }
+        
+        // For menu bar apps, we generally want to prevent termination
+        // Users can force quit if needed via Activity Monitor
         return .terminateCancel
     }
     

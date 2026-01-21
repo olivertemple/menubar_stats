@@ -175,47 +175,55 @@ class NetworkMonitor {
             return cachedExternalIP
         }
         
-        // Try to fetch external IP asynchronously (non-blocking)
-        let semaphore = DispatchSemaphore(value: 0)
-        var externalIP = "N/A"
+        // If we're checking for the first time or cache is old, trigger async update
+        if now.timeIntervalSince(lastExternalIPCheck) >= 300 {
+            lastExternalIPCheck = now
+            fetchExternalIPAsync()
+        }
         
+        // Return cached value immediately (non-blocking)
+        return cachedExternalIP
+    }
+    
+    private func fetchExternalIPAsync() {
         let services = [
             "https://api.ipify.org",
             "https://icanhazip.com",
             "https://ifconfig.me/ip"
         ]
         
-        for service in services {
-            guard let url = URL(string: service) else { continue }
-            
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 2.0
-            
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                if let data = data,
-                   let httpResponse = response as? HTTPURLResponse,
-                   httpResponse.statusCode == 200,
-                   let ip = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !ip.isEmpty {
-                    externalIP = ip
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            for service in services {
+                guard let url = URL(string: service) else { continue }
+                
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 2.0
+                
+                let semaphore = DispatchSemaphore(value: 0)
+                var externalIP: String?
+                
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let data = data,
+                       let httpResponse = response as? HTTPURLResponse,
+                       httpResponse.statusCode == 200,
+                       let ip = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                       !ip.isEmpty {
+                        externalIP = ip
+                    }
+                    semaphore.signal()
                 }
-                semaphore.signal()
-            }
-            
-            task.resume()
-            
-            // Wait up to 2 seconds for response
-            if semaphore.wait(timeout: .now() + 2.0) == .success && externalIP != "N/A" {
-                break
+                
+                task.resume()
+                
+                // Wait up to 2 seconds for response
+                if semaphore.wait(timeout: .now() + 2.0) == .success, let ip = externalIP {
+                    DispatchQueue.main.async {
+                        self?.cachedExternalIP = ip
+                    }
+                    break
+                }
             }
         }
-        
-        if externalIP != "N/A" {
-            cachedExternalIP = externalIP
-            lastExternalIPCheck = now
-        }
-        
-        return externalIP
     }
     
     private func getMACAddress() -> String {

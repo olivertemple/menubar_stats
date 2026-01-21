@@ -846,8 +846,8 @@ func (c *Collector) getExternalIPv4() string {
 		}
 
 		ip := strings.TrimSpace(string(body))
-		// Validate it looks like an IPv4 address
-		if net.ParseIP(ip) != nil && strings.Contains(ip, ".") {
+		// Validate it's a proper IPv4 address
+		if parsedIP := net.ParseIP(ip); parsedIP != nil && parsedIP.To4() != nil {
 			return ip
 		}
 	}
