@@ -471,7 +471,8 @@ class TrueNASAPIClient {
 
             return RemoteLinuxStats.NetworkStats(
                 available: true,
-                interfaces: interfaces.isEmpty ? nil : interfaces
+                interfaces: interfaces.isEmpty ? nil : interfaces,
+                externalIpv4: nil
             )
         } catch let error as TrueNASError {
             throw error

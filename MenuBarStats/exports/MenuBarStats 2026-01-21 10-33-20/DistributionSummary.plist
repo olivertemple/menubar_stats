@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>MenuBarStats</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>x86_64</string>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>701618FCEBD1169F236AB6E3BEAE72F60681953A</string>
+				<key>dateExpires</key>
+				<string>01/02/2027</string>
+				<key>type</key>
+				<string>Cloud Managed Developer ID Application</string>
+			</dict>
+			<key>name</key>
+			<string>MenuBarStats.app</string>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>V2Y5YKCMTR</string>
+				<key>name</key>
+				<string>Oliver Temple</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0</string>
+		</dict>
+	</array>
+</dict>
+</plist>
