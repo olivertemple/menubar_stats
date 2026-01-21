@@ -699,6 +699,12 @@ func (c *Collector) enrichNetworkInterface(iface *NetworkInterface) {
 // getIPAddressesViaIPCommand uses the 'ip' command to get IP addresses
 // This works better in containerized environments (e.g., TrueNAS SCALE)
 func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
+	// Validate interface name to prevent command injection
+	// Interface names should only contain alphanumeric, hyphens, underscores, and dots
+	if !isValidInterfaceName(iface.Name) {
+		return false
+	}
+	
 	// Execute 'ip addr show <interface>'
 	cmd := exec.Command("ip", "addr", "show", iface.Name)
 	output, err := cmd.CombinedOutput()
@@ -719,7 +725,10 @@ func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
 			if len(fields) >= 2 {
 				// Extract IP address (remove /prefix if present)
 				ipWithMask := fields[1]
-				ip := strings.Split(ipWithMask, "/")[0]
+				ip := ipWithMask
+				if idx := strings.Index(ipWithMask, "/"); idx != -1 {
+					ip = ipWithMask[:idx]
+				}
 				
 				// Validate and store IPv4
 				if parsedIP := net.ParseIP(ip); parsedIP != nil && parsedIP.To4() != nil {
@@ -734,7 +743,10 @@ func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
 			if len(fields) >= 2 {
 				// Extract IPv6 address (remove /prefix if present)
 				ipWithMask := fields[1]
-				ip := strings.Split(ipWithMask, "/")[0]
+				ip := ipWithMask
+				if idx := strings.Index(ipWithMask, "/"); idx != -1 {
+					ip = ipWithMask[:idx]
+				}
 				
 				// Validate and store IPv6 (skip link-local)
 				if parsedIP := net.ParseIP(ip); parsedIP != nil {
@@ -748,6 +760,25 @@ func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
 	}
 	
 	return foundAny
+}
+
+// isValidInterfaceName checks if an interface name is safe to use in commands
+// Prevents command injection by ensuring only valid characters are present
+func isValidInterfaceName(name string) bool {
+	if name == "" || len(name) > 15 { // Linux interface names are max 15 chars
+		return false
+	}
+	
+	for _, ch := range name {
+		if !((ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z') ||
+			(ch >= '0' && ch <= '9') ||
+			ch == '-' || ch == '_' || ch == '.') {
+			return false
+		}
+	}
+	
+	return true
 }
 
 func (c *Collector) collectThermals() *ThermalStats {
