@@ -40,6 +40,8 @@ protocol StatsSource {
     var networkDownloadSpeed: Double { get }
     var networkIPAddress: String { get }
     var networkMACAddress: String { get }
+    var networkExternalIPv4: String { get }
+    var networkAllIPAddresses: String { get }
     var networkUploadHistory: [Double] { get }
     var networkDownloadHistory: [Double] { get }
     

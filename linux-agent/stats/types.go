@@ -67,8 +67,9 @@ type Filesystem struct {
 }
 
 type NetworkStats struct {
-	Available  bool               `json:"available"`
-	Interfaces []NetworkInterface `json:"interfaces,omitempty"`
+	Available       bool               `json:"available"`
+	Interfaces      []NetworkInterface `json:"interfaces,omitempty"`
+	ExternalIPv4    *string            `json:"externalIpv4,omitempty"`
 }
 
 type NetworkInterface struct {

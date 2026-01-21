@@ -16,6 +16,8 @@ class SystemMonitor: ObservableObject {
     @Published var networkDownloadSpeed: Double = 0.0
     @Published var networkIPAddress: String = "N/A"
     @Published var networkMACAddress: String = "N/A"
+    @Published var networkExternalIPv4: String = "N/A"
+    @Published var networkAllIPAddresses: String = "N/A"
     @Published var cpuTemperature: Double = 0.0
     @Published var gpuTemperature: Double = 0.0
     @Published var openPorts: [PortInfo] = []
@@ -173,6 +175,8 @@ class SystemMonitor: ObservableObject {
         networkDownloadSpeed = netStats.downloadSpeed
         networkIPAddress = netStats.ipAddress
         networkMACAddress = netStats.macAddress
+        networkExternalIPv4 = netStats.externalIPv4
+        networkAllIPAddresses = netStats.allIPAddresses
         
         // Convert to KB/s for history tracking
         let uploadKBps = networkUploadSpeed / 1024

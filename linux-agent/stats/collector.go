@@ -3,8 +3,12 @@ package stats
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -628,6 +632,11 @@ func (c *Collector) collectNetwork() *NetworkStats {
 		stats.Interfaces = interfaces
 	}
 
+	// Try to get external IPv4 address (best effort, non-blocking)
+	if externalIP := c.getExternalIPv4(); externalIP != "" {
+		stats.ExternalIPv4 = &externalIP
+	}
+
 	return stats
 }
 
@@ -641,9 +650,135 @@ func (c *Collector) enrichNetworkInterface(iface *NetworkInterface) {
 		}
 	}
 
-	// Try to get IP addresses (best effort)
-	// This is complex without external libs, so we'll skip for now
-	// In production, you might parse /proc/net/fib_trie or use netlink
+	// Try to get IP addresses using the 'ip' command first (works in containers)
+	// This is more reliable when running in Docker/TrueNAS environments
+	if c.getIPAddressesViaIPCommand(iface) {
+		return
+	}
+
+	// Fallback to Go's net package
+	netIface, err := net.InterfaceByName(iface.Name)
+	if err != nil {
+		return
+	}
+
+	addrs, err := netIface.Addrs()
+	if err != nil {
+		return
+	}
+
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+
+		ip := ipNet.IP
+		// Skip loopback addresses
+		if ip.IsLoopback() {
+			continue
+		}
+
+		// Check if IPv4 or IPv6
+		if ipv4 := ip.To4(); ipv4 != nil {
+			// IPv4 address
+			if iface.Ipv4Address == nil {
+				ipv4Str := ipv4.String()
+				iface.Ipv4Address = &ipv4Str
+			}
+		} else if ipv6 := ip.To16(); ipv6 != nil {
+			// IPv6 address (skip link-local)
+			if !ip.IsLinkLocalUnicast() && iface.Ipv6Address == nil {
+				ipv6Str := ipv6.String()
+				iface.Ipv6Address = &ipv6Str
+			}
+		}
+	}
+}
+
+// getIPAddressesViaIPCommand uses the 'ip' command to get IP addresses
+// This works better in containerized environments (e.g., TrueNAS SCALE)
+func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
+	// Validate interface name to prevent command injection
+	// Interface names should only contain alphanumeric, hyphens, underscores, and dots
+	if !isValidInterfaceName(iface.Name) {
+		return false
+	}
+	
+	// Execute 'ip addr show <interface>'
+	cmd := exec.Command("ip", "addr", "show", iface.Name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+
+	// Parse the output for inet and inet6 addresses
+	lines := strings.Split(string(output), "\n")
+	foundAny := false
+	
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		
+		// Look for "inet" lines
+		if strings.HasPrefix(line, "inet ") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				// Extract IP address (remove /prefix if present)
+				ipWithMask := fields[1]
+				ip := ipWithMask
+				if idx := strings.Index(ipWithMask, "/"); idx != -1 {
+					ip = ipWithMask[:idx]
+				}
+				
+				// Validate and store IPv4
+				if parsedIP := net.ParseIP(ip); parsedIP != nil && parsedIP.To4() != nil {
+					if !parsedIP.IsLoopback() && iface.Ipv4Address == nil {
+						iface.Ipv4Address = &ip
+						foundAny = true
+					}
+				}
+			}
+		} else if strings.HasPrefix(line, "inet6 ") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				// Extract IPv6 address (remove /prefix if present)
+				ipWithMask := fields[1]
+				ip := ipWithMask
+				if idx := strings.Index(ipWithMask, "/"); idx != -1 {
+					ip = ipWithMask[:idx]
+				}
+				
+				// Validate and store IPv6 (skip link-local)
+				if parsedIP := net.ParseIP(ip); parsedIP != nil {
+					if !parsedIP.IsLoopback() && !parsedIP.IsLinkLocalUnicast() && iface.Ipv6Address == nil {
+						iface.Ipv6Address = &ip
+						foundAny = true
+					}
+				}
+			}
+		}
+	}
+	
+	return foundAny
+}
+
+// isValidInterfaceName checks if an interface name is safe to use in commands
+// Prevents command injection by ensuring only valid characters are present
+func isValidInterfaceName(name string) bool {
+	if name == "" || len(name) > 15 { // Linux interface names are max 15 chars
+		return false
+	}
+	
+	for _, ch := range name {
+		if !((ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z') ||
+			(ch >= '0' && ch <= '9') ||
+			ch == '-' || ch == '_' || ch == '.') {
+			return false
+		}
+	}
+	
+	return true
 }
 
 func (c *Collector) collectThermals() *ThermalStats {
@@ -769,4 +904,45 @@ func (c *Collector) logError(component, message string) {
 		c.loggedErrors[key] = true
 	}
 	c.errors = append(c.errors, fmt.Sprintf("%s: %s", component, message))
+}
+
+// getExternalIPv4 attempts to fetch the external IPv4 address using a public IP service
+// Returns empty string on failure (best effort, non-blocking with timeout)
+func (c *Collector) getExternalIPv4() string {
+	// Use a short timeout to avoid blocking stats collection
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	// Try multiple services in case one is down
+	services := []string{
+		"https://api.ipify.org",
+		"https://icanhazip.com",
+		"https://ifconfig.me/ip",
+	}
+
+	for _, service := range services {
+		resp, err := client.Get(service)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			continue
+		}
+
+		ip := strings.TrimSpace(string(body))
+		// Validate it's a proper IPv4 address
+		if parsedIP := net.ParseIP(ip); parsedIP != nil && parsedIP.To4() != nil {
+			return ip
+		}
+	}
+
+	return ""
 }
