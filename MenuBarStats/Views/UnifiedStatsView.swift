@@ -388,10 +388,7 @@ struct NetworkSectionView: View {
                         StatRow(label: "Download", value: "\(formatBytes(source.networkDownloadSpeed))/s")
                         StatRow(label: "Local IP", value: source.networkIPAddress)
                         StatRow(label: "External IP", value: source.networkExternalIPv4)
-                        if source.networkAllIPAddresses != "N/A" && source.networkAllIPAddresses != source.networkIPAddress {
-                            StatRow(label: "All IPs", value: source.networkAllIPAddresses)
-                                .lineLimit(nil) // Allow multiple lines for all IPs
-                        }
+                        
                     }
                     .padding(.leading, 30)
                 }
