@@ -51,6 +51,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Prevent app from quitting when all windows are closed or during sleep
+        NSApplication.shared.setActivationPolicy(.accessory)
+        
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
@@ -218,6 +221,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     @objc func applicationWillTerminate(_ notification: Notification) {
         print("[AppDelegate] applicationWillTerminate: app is terminating")
+    }
+    
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Prevent app from terminating - it's a menu bar app that should always run
+        return .terminateCancel
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        // Don't terminate when windows close - we're a menu bar app
+        return false
     }
 
     @objc func systemWillSleep(_ notification: Notification) {
