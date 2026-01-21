@@ -77,6 +77,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             object: nil
         )
 
+        // Observe system sleep/wake notifications to pause/resume monitoring
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemWillSleep(_:)),
+            name: NSWorkspace.willSleepNotification,
+            object: nil
+        )
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemDidWake(_:)),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+
+        // Observe app termination for logging/debugging
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate(_:)),
+            name: NSApplication.willTerminateNotification,
+            object: nil
+        )
+
         // Close popover when the app resigns active (clicking away)
         NotificationCenter.default.addObserver(
             self,
@@ -191,6 +214,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     @objc func applicationDidResignActive(_ notification: Notification) {
         popover?.performClose(nil)
+    }
+
+    @objc func applicationWillTerminate(_ notification: Notification) {
+        print("[AppDelegate] applicationWillTerminate: app is terminating")
+    }
+
+    @objc func systemWillSleep(_ notification: Notification) {
+        print("[AppDelegate] systemWillSleep: pausing monitors and timers")
+        // Pause UI update timer and monitoring
+        menuBarUpdateTimer?.invalidate()
+        systemMonitor.stopMonitoring()
+        statsCoordinator.stop()
+    }
+
+    @objc func systemDidWake(_ notification: Notification) {
+        print("[AppDelegate] systemDidWake: resuming monitors and timers")
+        // Resume monitoring and UI updates
+        systemMonitor.startMonitoring(interval: settings.refreshInterval)
+        statsCoordinator.start()
+        startMenuBarUpdateTimer()
+        updateMenuBarDisplay()
     }
 
     // Add global + local mouse event monitors to close the popover when clicking outside

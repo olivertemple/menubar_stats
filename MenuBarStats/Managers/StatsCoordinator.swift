@@ -225,6 +225,13 @@ class StatsCoordinator: ObservableObject {
             hostManager.updateHost(updatedHost)
         }
     }
+
+    // Stop background updates (used when system is going to sleep)
+    func stop() {
+        updateTimer?.invalidate()
+        updateTimer = nil
+        isStarted = false
+    }
     
     deinit {
         updateTimer?.invalidate()
