@@ -261,8 +261,13 @@ struct LocalMenuBarView: View {
                                         
                                         SectionDivider()
                                         
-                                        StatRow(label: "IP Address", value: systemMonitor.networkIPAddress)
+                                        StatRow(label: "Local IP", value: systemMonitor.networkIPAddress)
+                                        StatRow(label: "External IP", value: systemMonitor.networkExternalIPv4)
                                         StatRow(label: "MAC Address", value: systemMonitor.networkMACAddress)
+                                        if systemMonitor.networkAllIPAddresses != "N/A" && systemMonitor.networkAllIPAddresses != systemMonitor.networkIPAddress {
+                                            StatRow(label: "All IPs", value: systemMonitor.networkAllIPAddresses)
+                                                .lineLimit(nil)
+                                        }
                                     }
                                     .padding(.leading, 30)
                                 }
@@ -1026,7 +1031,12 @@ struct RemoteNetworkSection: View {
                     VStack(alignment: .leading, spacing: 6) {
                         StatRow(label: "Upload", value: "\(formatBytes(source.networkUploadSpeed))/s")
                         StatRow(label: "Download", value: "\(formatBytes(source.networkDownloadSpeed))/s")
-                        StatRow(label: "IP Address", value: source.networkIPAddress)
+                        StatRow(label: "Local IP", value: source.networkIPAddress)
+                        StatRow(label: "External IP", value: source.networkExternalIPv4)
+                        if source.networkAllIPAddresses != "N/A" && source.networkAllIPAddresses != source.networkIPAddress {
+                            StatRow(label: "All IPs", value: source.networkAllIPAddresses)
+                                .lineLimit(nil)
+                        }
                         
                         if !source.networkUploadHistory.isEmpty {
                             VStack(alignment: .leading, spacing: 4) {

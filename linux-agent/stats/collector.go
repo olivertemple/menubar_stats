@@ -3,7 +3,10 @@ package stats
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -628,6 +631,11 @@ func (c *Collector) collectNetwork() *NetworkStats {
 		stats.Interfaces = interfaces
 	}
 
+	// Try to get external IPv4 address (best effort, non-blocking)
+	if externalIP := c.getExternalIPv4(); externalIP != "" {
+		stats.ExternalIPv4 = &externalIP
+	}
+
 	return stats
 }
 
@@ -641,9 +649,44 @@ func (c *Collector) enrichNetworkInterface(iface *NetworkInterface) {
 		}
 	}
 
-	// Try to get IP addresses (best effort)
-	// This is complex without external libs, so we'll skip for now
-	// In production, you might parse /proc/net/fib_trie or use netlink
+	// Get IP addresses using net package
+	netIface, err := net.InterfaceByName(iface.Name)
+	if err != nil {
+		return
+	}
+
+	addrs, err := netIface.Addrs()
+	if err != nil {
+		return
+	}
+
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+
+		ip := ipNet.IP
+		// Skip loopback addresses
+		if ip.IsLoopback() {
+			continue
+		}
+
+		// Check if IPv4 or IPv6
+		if ipv4 := ip.To4(); ipv4 != nil {
+			// IPv4 address
+			if iface.Ipv4Address == nil {
+				ipv4Str := ipv4.String()
+				iface.Ipv4Address = &ipv4Str
+			}
+		} else if ipv6 := ip.To16(); ipv6 != nil {
+			// IPv6 address (skip link-local)
+			if !ip.IsLinkLocalUnicast() && iface.Ipv6Address == nil {
+				ipv6Str := ipv6.String()
+				iface.Ipv6Address = &ipv6Str
+			}
+		}
+	}
 }
 
 func (c *Collector) collectThermals() *ThermalStats {
@@ -769,4 +812,45 @@ func (c *Collector) logError(component, message string) {
 		c.loggedErrors[key] = true
 	}
 	c.errors = append(c.errors, fmt.Sprintf("%s: %s", component, message))
+}
+
+// getExternalIPv4 attempts to fetch the external IPv4 address using a public IP service
+// Returns empty string on failure (best effort, non-blocking with timeout)
+func (c *Collector) getExternalIPv4() string {
+	// Use a short timeout to avoid blocking stats collection
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	// Try multiple services in case one is down
+	services := []string{
+		"https://api.ipify.org",
+		"https://icanhazip.com",
+		"https://ifconfig.me/ip",
+	}
+
+	for _, service := range services {
+		resp, err := client.Get(service)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			continue
+		}
+
+		ip := strings.TrimSpace(string(body))
+		// Validate it looks like an IPv4 address
+		if net.ParseIP(ip) != nil && strings.Contains(ip, ".") {
+			return ip
+		}
+	}
+
+	return ""
 }

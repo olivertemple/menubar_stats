@@ -41,6 +41,8 @@ class LocalStatsSource: StatsSource {
     var networkDownloadSpeed: Double { monitor.networkDownloadSpeed }
     var networkIPAddress: String { monitor.networkIPAddress }
     var networkMACAddress: String { monitor.networkMACAddress }
+    var networkExternalIPv4: String { monitor.networkExternalIPv4 }
+    var networkAllIPAddresses: String { monitor.networkAllIPAddresses }
     var networkUploadHistory: [Double] { monitor.networkUploadHistory }
     var networkDownloadHistory: [Double] { monitor.networkDownloadHistory }
     

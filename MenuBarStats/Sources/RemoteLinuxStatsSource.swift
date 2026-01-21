@@ -273,6 +273,14 @@ class RemoteLinuxStatsSource: StatsSource {
         stats?.primaryMACAddress ?? "N/A"
     }
     
+    var networkExternalIPv4: String {
+        stats?.externalIPAddress ?? "N/A"
+    }
+    
+    var networkAllIPAddresses: String {
+        stats?.allIPAddresses ?? "N/A"
+    }
+    
     var networkUploadHistory: [Double] {
         networkUploadHistoryBuffer.getValues()
     }

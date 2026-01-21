@@ -6,23 +6,31 @@ struct NetworkStats {
     let downloadSpeed: Double
     let ipAddress: String
     let macAddress: String
+    let externalIPv4: String
+    let allIPAddresses: String
 }
 
 class NetworkMonitor {
     private var previousUploadBytes: UInt64 = 0
     private var previousDownloadBytes: UInt64 = 0
     private var lastUpdateTime: Date = Date()
+    private var cachedExternalIP: String = "N/A"
+    private var lastExternalIPCheck: Date = Date.distantPast
     
     func getNetworkStats() -> NetworkStats {
         let (upload, download) = getNetworkTraffic()
         let ipAddress = getIPAddress()
         let macAddress = getMACAddress()
+        let externalIPv4 = getExternalIPv4()
+        let allIPAddresses = getAllIPAddresses()
         
         return NetworkStats(
             uploadSpeed: upload,
             downloadSpeed: download,
             ipAddress: ipAddress,
-            macAddress: macAddress
+            macAddress: macAddress,
+            externalIPv4: externalIPv4,
+            allIPAddresses: allIPAddresses
         )
     }
     
@@ -105,6 +113,109 @@ class NetworkMonitor {
         }
         
         return address
+    }
+    
+    private func getAllIPAddresses() -> String {
+        var addresses: [String] = []
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        
+        guard getifaddrs(&ifaddr) == 0 else { return "N/A" }
+        defer { freeifaddrs(ifaddr) }
+        
+        var ptr = ifaddr
+        while ptr != nil {
+            defer { ptr = ptr?.pointee.ifa_next }
+            
+            guard let interface = ptr?.pointee else { continue }
+            let name = String(cString: interface.ifa_name)
+            
+            // Skip loopback
+            if name == "lo0" {
+                continue
+            }
+            
+            // Check for active interfaces only
+            if (interface.ifa_flags & UInt32(IFF_UP)) == 0 {
+                continue
+            }
+            
+            var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            
+            // IPv4 addresses
+            if let addr = interface.ifa_addr,
+               addr.pointee.sa_family == UInt8(AF_INET),
+               getnameinfo(addr, socklen_t(addr.pointee.sa_len),
+                         &hostname, socklen_t(hostname.count),
+                         nil, socklen_t(0), NI_NUMERICHOST) == 0 {
+                let ipAddress = String(cString: hostname)
+                addresses.append("\(name): \(ipAddress)")
+            }
+            
+            // IPv6 addresses (skip link-local)
+            if let addr = interface.ifa_addr,
+               addr.pointee.sa_family == UInt8(AF_INET6),
+               getnameinfo(addr, socklen_t(addr.pointee.sa_len),
+                         &hostname, socklen_t(hostname.count),
+                         nil, socklen_t(0), NI_NUMERICHOST) == 0 {
+                let ipAddress = String(cString: hostname)
+                // Skip link-local IPv6 addresses (fe80::)
+                if !ipAddress.hasPrefix("fe80:") {
+                    addresses.append("\(name) (IPv6): \(ipAddress)")
+                }
+            }
+        }
+        
+        return addresses.isEmpty ? "N/A" : addresses.joined(separator: ", ")
+    }
+    
+    private func getExternalIPv4() -> String {
+        // Cache external IP for 5 minutes to avoid too many requests
+        let now = Date()
+        if now.timeIntervalSince(lastExternalIPCheck) < 300 && cachedExternalIP != "N/A" {
+            return cachedExternalIP
+        }
+        
+        // Try to fetch external IP asynchronously (non-blocking)
+        let semaphore = DispatchSemaphore(value: 0)
+        var externalIP = "N/A"
+        
+        let services = [
+            "https://api.ipify.org",
+            "https://icanhazip.com",
+            "https://ifconfig.me/ip"
+        ]
+        
+        for service in services {
+            guard let url = URL(string: service) else { continue }
+            
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 2.0
+            
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                if let data = data,
+                   let httpResponse = response as? HTTPURLResponse,
+                   httpResponse.statusCode == 200,
+                   let ip = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !ip.isEmpty {
+                    externalIP = ip
+                }
+                semaphore.signal()
+            }
+            
+            task.resume()
+            
+            // Wait up to 2 seconds for response
+            if semaphore.wait(timeout: .now() + 2.0) == .success && externalIP != "N/A" {
+                break
+            }
+        }
+        
+        if externalIP != "N/A" {
+            cachedExternalIP = externalIP
+            lastExternalIPCheck = now
+        }
+        
+        return externalIP
     }
     
     private func getMACAddress() -> String {

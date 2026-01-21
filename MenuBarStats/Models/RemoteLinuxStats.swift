@@ -71,6 +71,7 @@ struct RemoteLinuxStats: Codable {
     struct NetworkStats: Codable {
         let available: Bool
         let interfaces: [NetworkInterface]?
+        let externalIpv4: String?
     }
     
     struct NetworkInterface: Codable {
@@ -151,6 +152,33 @@ struct RemoteLinuxStats: Codable {
     
     var primaryMACAddress: String {
         network?.interfaces?.first(where: { $0.macAddress != nil && !$0.macAddress!.isEmpty })?.macAddress ?? "N/A"
+    }
+    
+    var externalIPAddress: String {
+        network?.externalIpv4 ?? "N/A"
+    }
+    
+    var allIPAddresses: String {
+        var ips: [String] = []
+        
+        // Add external IP first if available
+        if let external = network?.externalIpv4, !external.isEmpty {
+            ips.append("External: \(external)")
+        }
+        
+        // Add all interface IPs
+        if let interfaces = network?.interfaces {
+            for interface in interfaces {
+                if let ipv4 = interface.ipv4Address, !ipv4.isEmpty {
+                    ips.append("\(interface.name): \(ipv4)")
+                }
+                if let ipv6 = interface.ipv6Address, !ipv6.isEmpty {
+                    ips.append("\(interface.name) (IPv6): \(ipv6)")
+                }
+            }
+        }
+        
+        return ips.isEmpty ? "N/A" : ips.joined(separator: ", ")
     }
     
     var averageTemperature: Double? {
