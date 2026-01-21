@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -649,7 +650,13 @@ func (c *Collector) enrichNetworkInterface(iface *NetworkInterface) {
 		}
 	}
 
-	// Get IP addresses using net package
+	// Try to get IP addresses using the 'ip' command first (works in containers)
+	// This is more reliable when running in Docker/TrueNAS environments
+	if c.getIPAddressesViaIPCommand(iface) {
+		return
+	}
+
+	// Fallback to Go's net package
 	netIface, err := net.InterfaceByName(iface.Name)
 	if err != nil {
 		return
@@ -687,6 +694,60 @@ func (c *Collector) enrichNetworkInterface(iface *NetworkInterface) {
 			}
 		}
 	}
+}
+
+// getIPAddressesViaIPCommand uses the 'ip' command to get IP addresses
+// This works better in containerized environments (e.g., TrueNAS SCALE)
+func (c *Collector) getIPAddressesViaIPCommand(iface *NetworkInterface) bool {
+	// Execute 'ip addr show <interface>'
+	cmd := exec.Command("ip", "addr", "show", iface.Name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+
+	// Parse the output for inet and inet6 addresses
+	lines := strings.Split(string(output), "\n")
+	foundAny := false
+	
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		
+		// Look for "inet" lines
+		if strings.HasPrefix(line, "inet ") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				// Extract IP address (remove /prefix if present)
+				ipWithMask := fields[1]
+				ip := strings.Split(ipWithMask, "/")[0]
+				
+				// Validate and store IPv4
+				if parsedIP := net.ParseIP(ip); parsedIP != nil && parsedIP.To4() != nil {
+					if !parsedIP.IsLoopback() && iface.Ipv4Address == nil {
+						iface.Ipv4Address = &ip
+						foundAny = true
+					}
+				}
+			}
+		} else if strings.HasPrefix(line, "inet6 ") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				// Extract IPv6 address (remove /prefix if present)
+				ipWithMask := fields[1]
+				ip := strings.Split(ipWithMask, "/")[0]
+				
+				// Validate and store IPv6 (skip link-local)
+				if parsedIP := net.ParseIP(ip); parsedIP != nil {
+					if !parsedIP.IsLoopback() && !parsedIP.IsLinkLocalUnicast() && iface.Ipv6Address == nil {
+						iface.Ipv6Address = &ip
+						foundAny = true
+					}
+				}
+			}
+		}
+	}
+	
+	return foundAny
 }
 
 func (c *Collector) collectThermals() *ThermalStats {
